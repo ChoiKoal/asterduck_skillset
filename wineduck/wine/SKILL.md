@@ -164,25 +164,6 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/5/a
 | `red` | 레드 와인 |
 | `rose` | 로제 와인 |
 | `white_sparkling` | 화이트 와인, 스파클링 와인 (⚠️ "white" 단독 사용 불가!) |
-
-## 와인 수정 (관리자 전용)
-
-> ⚠️ 와인 수정/삭제는 **관리자(super-admin)** 권한이 필요합니다. 일반 사용자는 와인 등록만 가능합니다.
-
-```bash
-curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/{wine_id}" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"producer": "수정된 생산자명"}'
-```
-
-## 와인 삭제 (관리자 전용)
-
-```bash
-curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/{wine_id}" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
 ## 대화형 등록 예시
 
 사용자가 자연어로 와인 등록을 요청하면:
