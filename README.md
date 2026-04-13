@@ -9,6 +9,7 @@
 | AI | 방식 | 폴더 |
 |----|------|------|
 | **Claude Code** | SKILL.md 스킬 설치 | [`claude/`](./claude/) |
+| **OpenAI Codex** | SKILL.md 스킬 설치 (frontmatter) | [`codex/`](./codex/) |
 | **ChatGPT (GPTs)** | OpenAPI Custom Actions | [`openapi/`](./openapi/) |
 | **Gemini (Gems)** | OpenAPI 참조 | [`openapi/`](./openapi/) |
 | **Cursor / Copilot** | OpenAPI 자동 인식 | [`openapi/`](./openapi/) |
@@ -42,6 +43,18 @@ cp -r asterduck_skillset/claude/wineduck/search ~/.claude/skills/wineduck-search
 cp -r asterduck_skillset/claude/wineduck/tasting ~/.claude/skills/wineduck-tasting
 cp -r asterduck_skillset/claude/wineduck/wine ~/.claude/skills/wineduck-wine
 ```
+
+### OpenAI Codex — 스킬 설치
+
+```bash
+git clone https://github.com/ChoiKoal/asterduck_skillset.git
+
+# .agents/skills 디렉토리에 복사
+mkdir -p .agents/skills
+cp -r asterduck_skillset/codex/* .agents/skills/
+```
+
+상세 가이드: [`codex/README.md`](./codex/README.md)
 
 ### ChatGPT (GPTs) — Custom Actions
 
@@ -88,6 +101,15 @@ asterduck_skillset/
 │       ├── search/SKILL.md
 │       ├── tasting/SKILL.md
 │       └── wine/SKILL.md
+├── codex/                 # OpenAI Codex 스킬
+│   ├── README.md
+│   ├── auth/SKILL.md
+│   ├── coffeeduck-search/SKILL.md
+│   ├── coffeeduck-tasting/SKILL.md
+│   ├── coffeeduck-coffee/SKILL.md
+│   ├── wineduck-search/SKILL.md
+│   ├── wineduck-tasting/SKILL.md
+│   └── wineduck-wine/SKILL.md
 ├── openapi/               # OpenAPI 스펙 (GPTs/Gemini/범용)
 │   ├── asterduck-api.yaml
 │   └── README.md
