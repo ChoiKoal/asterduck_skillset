@@ -101,7 +101,7 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
     "repurchase": true,
     "pairing_food": "양갈비",
     "color": "ruby",
-    "drink_window": "1-3y",
+    "drink_window": "within_1_5y",
     "aromas": [
       {"source": "custom", "custom_label": "체리"},
       {"source": "custom", "custom_label": "오크"},
@@ -170,7 +170,7 @@ curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/wineduck/t
 | 재구매 의향 | repurchase | true / false | ❌ |
 | 페어링 음식 | pairing_food | 텍스트 | ❌ |
 | 색상 | color | 텍스트 (ruby, garnet, purple 등) | ❌ |
-| 음용 적기 | drink_window | now / 1-3y / 3-5y / 5-10y / 10y+ | ❌ |
+| 음용 적기 | drink_window | now / within_1_5y / over_5y | ❌ |
 | 가격 | price_amount | 숫자 | ❌ |
 | 통화 | currency_code | KRW / USD / EUR (기본: KRW) | ❌ |
 | 향 | aromas | 배열 | ❌ |
