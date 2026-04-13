@@ -2,7 +2,7 @@
 
 WineDuck 플랫폼에 새로운 와인을 등록하고 관리하는 스킬.
 중복 검색, 와인명 규칙 가이드, 아펠라시옹 매핑을 포함.
-인증 필요 (wineduck-auth 스킬과 함께 사용).
+인증 필요 (asterduck-auth 스킬과 함께 사용).
 
 ## Trigger
 
@@ -16,7 +16,7 @@ https://coffeeduckbe-production.up.railway.app/api/wineduck
 
 ## 인증
 
-와인 등록/수정/삭제는 로그인 토큰 필요. wineduck-auth 스킬로 먼저 로그인.
+와인 등록은 로그인 토큰 필요. asterduck-auth 스킬로 먼저 로그인.
 
 ```
 Authorization: Bearer {토큰}

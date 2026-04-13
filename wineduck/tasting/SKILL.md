@@ -1,7 +1,7 @@
 # WineDuck Tasting — 테이스팅 노트 관리
 
 WineDuck 플랫폼에서 와인 테이스팅 노트를 대화형으로 등록하고 조회하는 스킬.
-인증 필요 (wineduck-auth 스킬과 함께 사용).
+인증 필요 (asterduck-auth 스킬과 함께 사용).
 
 ## Trigger
 
@@ -15,7 +15,7 @@ https://coffeeduckbe-production.up.railway.app/api/wineduck
 
 ## 인증
 
-모든 쓰기 API는 로그인 토큰이 필요. wineduck-auth 스킬로 먼저 로그인.
+모든 쓰기 API는 로그인 토큰이 필요. asterduck-auth 스킬로 먼저 로그인.
 
 ```
 Authorization: Bearer {토큰}
