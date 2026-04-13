@@ -23,10 +23,10 @@ WineDuck은 와인 덕후를 위한 테이스팅 노트 앱입니다. 이 스킬
 git clone https://github.com/ChoiKoal/asterduck_skillset.git
 
 # 공용 인증 스킬 + WineDuck 스킬 설치
-cp -r asterduck_skillset/auth ~/.claude/skills/asterduck-auth
-cp -r asterduck_skillset/wineduck/search ~/.claude/skills/wineduck-search
-cp -r asterduck_skillset/wineduck/tasting ~/.claude/skills/wineduck-tasting
-cp -r asterduck_skillset/wineduck/wine ~/.claude/skills/wineduck-wine
+cp -r asterduck_skillset/claude/auth ~/.claude/skills/asterduck-auth
+cp -r asterduck_skillset/claude/wineduck/search ~/.claude/skills/wineduck-search
+cp -r asterduck_skillset/claude/wineduck/tasting ~/.claude/skills/wineduck-tasting
+cp -r asterduck_skillset/claude/wineduck/wine ~/.claude/skills/wineduck-wine
 ```
 
 ## 사용 예시

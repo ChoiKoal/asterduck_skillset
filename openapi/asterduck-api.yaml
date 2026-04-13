@@ -1,0 +1,1270 @@
+openapi: 3.1.0
+info:
+  title: Aster.duck API
+  description: |
+    Aster.duck 플랫폼 API — CoffeeDuck & WineDuck 테이스팅 노트 서비스.
+
+    커피와 와인을 검색하고, 테이스팅 노트를 기록·관리할 수 있습니다.
+
+    ## 인증
+    - `/api/auth/login`으로 JWT 토큰 발급 (24시간 유효)
+    - 인증이 필요한 API는 `Authorization: Bearer {token}` 헤더 사용
+    - 검색/조회 API는 대부분 인증 불필요
+
+    ## 다국어
+    - `Accept-Language` 헤더로 응답 언어 변경: `ko`, `ja`, `en`
+  version: 1.0.0
+  contact:
+    name: Aster.duck
+    url: https://asterduck.koalstudio.com
+  license:
+    name: MIT
+
+servers:
+  - url: https://coffeeduckbe-production.up.railway.app/api
+    description: Production
+
+tags:
+  - name: Auth
+    description: 공용 인증 (로그인, 회원가입, 토큰)
+  - name: CoffeeDuck - Search
+    description: 커피 검색 & 탐색
+  - name: CoffeeDuck - Tasting
+    description: 커피 테이스팅 노트 CRUD
+  - name: CoffeeDuck - Coffee
+    description: 커피 등록
+  - name: WineDuck - Search
+    description: 와인 검색 & 지역 탐색
+  - name: WineDuck - Tasting
+    description: 와인 테이스팅 노트 CRUD
+  - name: WineDuck - Wine
+    description: 와인 등록
+
+# ──────────────────────────────────────────
+# Auth
+# ──────────────────────────────────────────
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: 로그인 (JWT 토큰 발급)
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: "myuser"
+                password:
+                  type: string
+                  example: "mypassword"
+      responses:
+        "200":
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                    description: JWT Bearer Token (24시간 유효)
+                  user:
+                    $ref: "#/components/schemas/UserInfo"
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: 회원가입
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, name]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+                  description: 표시 이름
+      responses:
+        "200":
+          description: 가입 성공
+
+  /auth/verify:
+    get:
+      tags: [Auth]
+      summary: 토큰 검증
+      operationId: verifyToken
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 토큰 유효
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: "#/components/schemas/UserInfo"
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: 비밀번호 변경
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+      responses:
+        "200":
+          description: 변경 성공
+
+  # ──────────────────────────────────────────
+  # CoffeeDuck - Search
+  # ──────────────────────────────────────────
+  /coffee:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 커피 목록 (검색 + 페이지네이션)
+      operationId: listCoffees
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: 검색 키워드
+        - name: search_type
+          in: query
+          schema:
+            type: string
+            enum: [all, name, supplier, country, varietal, flavor_notes, flavor_note_ids]
+            default: all
+        - name: flavor_note_ids
+          in: query
+          schema:
+            type: string
+          description: 플레이버 노트 ID (쉼표 구분, search_type=flavor_note_ids와 함께 사용)
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, name, avg_rating]
+            default: created_at
+        - name: sort_dir
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: 검색 결과
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  coffees:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CoffeeListItem"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+
+    post:
+      tags: [CoffeeDuck - Coffee]
+      summary: 커피 등록
+      operationId: createCoffee
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoffeeCreateRequest"
+      responses:
+        "200":
+          description: 등록 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  coffee_id:
+                    type: integer
+
+  /coffee/{coffee_id}:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 커피 상세 조회
+      operationId: getCoffee
+      parameters:
+        - name: coffee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 커피 상세
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  coffee:
+                    $ref: "#/components/schemas/CoffeeDetail"
+
+  /coffee/search-by-name:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 커피 이름 검색 (정확 매칭 + 유사 결과)
+      description: 중복 확인에 활용. 정확 매칭이 있으면 coffee에 반환, 없으면 null. 유사 결과는 similar에 최대 5개.
+      operationId: searchCoffeeByName
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 검색 결과
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  coffee:
+                    nullable: true
+                    description: 정확 매칭 결과 (없으면 null)
+                  similar:
+                    type: array
+                    items:
+                      type: object
+                  search_name:
+                    type: string
+
+  /flavor-notes:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 플레이버 노트 전체 목록
+      description: |
+        계층 구조: Level 1 (대분류) → Level 2 (중분류) → Level 3 (세부 향).
+        테이스팅 노트에서는 세부 향의 ID를 사용.
+      operationId: listFlavorNotes
+      parameters:
+        - name: Accept-Language
+          in: header
+          schema:
+            type: string
+            enum: [ko, ja, en]
+      responses:
+        "200":
+          description: 플레이버 노트 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  flavor_notes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FlavorNote"
+
+  /coffeeduck/flavor-notes/popular:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 인기 플레이버 노트 (Top 12)
+      operationId: popularFlavorNotes
+      responses:
+        "200":
+          description: 인기 플레이버 노트
+
+  /coffee/{coffee_id}/user-flavor-notes:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 커피별 사용자 향미 통계
+      operationId: coffeeUserFlavorNotes
+      parameters:
+        - name: coffee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 향미 통계
+
+  /varieties:
+    get:
+      tags: [CoffeeDuck - Search]
+      summary: 커피 품종 전체 목록
+      operationId: listVarieties
+      responses:
+        "200":
+          description: 품종 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  varieties:
+                    type: array
+                    items:
+                      type: string
+
+  # ──────────────────────────────────────────
+  # CoffeeDuck - Tasting
+  # ──────────────────────────────────────────
+  /coffeeduck/tasting/coffees/{coffee_id}/notes:
+    post:
+      tags: [CoffeeDuck - Tasting]
+      summary: 커피 테이스팅 노트 등록
+      operationId: createCoffeeTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: coffee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoffeeTastingCreateRequest"
+      responses:
+        "200":
+          description: 등록 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  tasting_note_id:
+                    type: integer
+
+    get:
+      tags: [CoffeeDuck - Tasting]
+      summary: 특정 커피의 테이스팅 목록
+      operationId: listCoffeeTastings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: coffee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 테이스팅 목록
+
+  /coffeeduck/tasting/notes/{note_id}:
+    get:
+      tags: [CoffeeDuck - Tasting]
+      summary: 테이스팅 노트 상세 조회
+      operationId: getCoffeeTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 테이스팅 상세
+
+    put:
+      tags: [CoffeeDuck - Tasting]
+      summary: 테이스팅 노트 수정 (본인만)
+      operationId: updateCoffeeTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoffeeTastingUpdateRequest"
+      responses:
+        "200":
+          description: 수정 성공
+
+    delete:
+      tags: [CoffeeDuck - Tasting]
+      summary: 테이스팅 노트 삭제 (본인만)
+      operationId: deleteCoffeeTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 삭제 성공
+
+  /coffeeduck/tasting/coffees/{coffee_id}/stats:
+    get:
+      tags: [CoffeeDuck - Tasting]
+      summary: 커피 커뮤니티 통계 (공개)
+      description: 인증 불필요. 해당 커피의 평균 팔레트, 평균 평점, 총 테이스팅 수.
+      operationId: coffeeTastingStats
+      parameters:
+        - name: coffee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 통계
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: object
+                    properties:
+                      total_tastings:
+                        type: integer
+                      avg_rating:
+                        type: number
+                      avg_palate:
+                        type: object
+                        properties:
+                          avg_acidity:
+                            type: number
+                          avg_body:
+                            type: number
+                          avg_sweetness:
+                            type: number
+                          avg_bitterness:
+                            type: number
+                          avg_finish:
+                            type: number
+
+  /coffeeduck/tasting/users/{user_id}/stats:
+    get:
+      tags: [CoffeeDuck - Tasting]
+      summary: 내 테이스팅 통계 (본인만)
+      operationId: myTastingStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 사용자 통계
+
+  # ──────────────────────────────────────────
+  # WineDuck - Search
+  # ──────────────────────────────────────────
+  /wineduck/wines/search:
+    get:
+      tags: [WineDuck - Search]
+      summary: 와인 이름 검색
+      operationId: searchWines
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 검색어 (부분 매칭)
+        - name: vintage
+          in: query
+          schema:
+            type: integer
+          description: 빈티지 연도 필터
+      responses:
+        "200":
+          description: 검색 결과
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  wines:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WineSearchResult"
+
+  /wineduck/wines/autocomplete:
+    get:
+      tags: [WineDuck - Search]
+      summary: 와인 자동완성 검색
+      description: 2글자 이상 입력 시 prefix → contains 2단계 매칭
+      operationId: autocompleteWines
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+      responses:
+        "200":
+          description: 자동완성 결과
+
+  /wineduck/countries:
+    get:
+      tags: [WineDuck - Search]
+      summary: 와인 생산국 목록
+      operationId: listWineCountries
+      responses:
+        "200":
+          description: 국가 목록
+
+  /wineduck/countries/{country_id}/regions:
+    get:
+      tags: [WineDuck - Search]
+      summary: 특정 국가의 와인 지역 목록
+      operationId: listWineRegions
+      parameters:
+        - name: country_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 지역 목록 (하위 지역 포함)
+
+  /wineduck/regions/{region_id}/appellations:
+    get:
+      tags: [WineDuck - Search]
+      summary: 특정 지역의 아펠라시옹 목록
+      operationId: listAppellations
+      parameters:
+        - name: region_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: include_sub
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: 하위 지역의 아펠라시옹도 포함
+      responses:
+        "200":
+          description: 아펠라시옹 목록
+
+  /wineduck/wines/{wine_id}:
+    get:
+      tags: [WineDuck - Search]
+      summary: 와인 상세 조회
+      operationId: getWine
+      parameters:
+        - name: wine_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 와인 상세
+
+  /wineduck/wines:
+    get:
+      tags: [WineDuck - Search]
+      summary: 와인 목록 (필터링)
+      operationId: listWines
+      parameters:
+        - name: country_id
+          in: query
+          schema:
+            type: integer
+        - name: region_id
+          in: query
+          schema:
+            type: integer
+        - name: appellation_id
+          in: query
+          schema:
+            type: integer
+        - name: wine_type
+          in: query
+          schema:
+            type: string
+            enum: [red, rose, white_sparkling]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 와인 목록
+
+    post:
+      tags: [WineDuck - Wine]
+      summary: 와인 등록
+      operationId: createWine
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WineCreateRequest"
+      responses:
+        "200":
+          description: 등록 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  wine_id:
+                    type: integer
+
+  # ──────────────────────────────────────────
+  # WineDuck - Tasting
+  # ──────────────────────────────────────────
+  /wineduck/wines/{wine_id}/tastings:
+    post:
+      tags: [WineDuck - Tasting]
+      summary: 와인 테이스팅 노트 등록
+      operationId: createWineTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wine_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WineTastingCreateRequest"
+      responses:
+        "200":
+          description: 등록 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  tasting_id:
+                    type: integer
+
+    get:
+      tags: [WineDuck - Tasting]
+      summary: 특정 와인의 테이스팅 목록
+      operationId: listWineTastings
+      parameters:
+        - name: wine_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 테이스팅 목록
+
+  /wineduck/tastings/{tasting_id}:
+    get:
+      tags: [WineDuck - Tasting]
+      summary: 테이스팅 노트 상세 조회
+      operationId: getWineTasting
+      parameters:
+        - name: tasting_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 테이스팅 상세
+
+    put:
+      tags: [WineDuck - Tasting]
+      summary: 테이스팅 노트 수정 (본인만)
+      operationId: updateWineTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tasting_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WineTastingUpdateRequest"
+      responses:
+        "200":
+          description: 수정 성공
+
+    delete:
+      tags: [WineDuck - Tasting]
+      summary: 테이스팅 노트 삭제 (본인만)
+      operationId: deleteWineTasting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tasting_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 삭제 성공
+
+  /wineduck/users/{user_id}/tastings:
+    get:
+      tags: [WineDuck - Tasting]
+      summary: 내 와인 테이스팅 목록 (본인만)
+      operationId: myWineTastings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 테이스팅 목록
+
+# ──────────────────────────────────────────
+# Components
+# ──────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 토큰 (24시간 유효). /api/auth/login으로 발급.
+
+  schemas:
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [user, super-admin]
+
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        total_count:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    CoffeeListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        supplier:
+          type: string
+          description: 로스터리/공급처
+        created_at:
+          type: string
+        avg_rating:
+          type: number
+        comment_count:
+          type: integer
+        flavor_notes:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              color:
+                type: string
+
+    CoffeeDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        supplier:
+          type: string
+        harvest_year:
+          type: integer
+          nullable: true
+        origin:
+          type: object
+          properties:
+            country:
+              type: string
+            region:
+              type: string
+            farm_name:
+              type: string
+            producer:
+              type: string
+              nullable: true
+            altitude_meters:
+              type: integer
+              nullable: true
+        processing:
+          type: object
+          properties:
+            method:
+              type: string
+            fermentation:
+              type: string
+              nullable: true
+        varietal:
+          type: array
+          items:
+            type: string
+        flavor_notes:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlavorNote"
+
+    FlavorNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        name_ko:
+          type: string
+        name_ja:
+          type: string
+        color:
+          type: string
+          nullable: true
+
+    CoffeeCreateRequest:
+      type: object
+      required: [name, roastery]
+      properties:
+        name:
+          type: string
+          description: "커피 이름 (예: Ethiopia Yirgacheffe Konga)"
+        roastery:
+          type: string
+          description: 로스터리/공급처
+        coffee_type:
+          type: string
+          enum: [single_origin, blend]
+          default: single_origin
+        origin:
+          type: object
+          properties:
+            country:
+              type: string
+              description: 산지 국가 (싱글 오리진 시 필수)
+            region:
+              type: string
+            farm_name:
+              type: string
+            producer:
+              type: string
+            altitude_meters:
+              type: integer
+        processing:
+          type: string
+          description: "가공법 (Washed, Natural, Honey, Anaerobic 등)"
+        fermentation:
+          type: string
+        harvest_year:
+          type: integer
+        variety:
+          type: array
+          items:
+            type: string
+          description: "품종 (예: [\"Heirloom\", \"SL28\"])"
+        flavor_notes:
+          type: array
+          items:
+            type: string
+          description: "대표 향미 (예: [\"blueberry\", \"jasmine\"])"
+        detail:
+          type: string
+
+    CoffeeTastingCreateRequest:
+      type: object
+      required: [rating]
+      properties:
+        tasted_at:
+          type: string
+          format: date
+          description: "시음 날짜 (YYYY-MM-DD, 기본: 오늘)"
+        acidity:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 산도 (0-100)
+        body:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 바디 (0-100)
+        sweetness:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 당도 (0-100)
+        bitterness:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 쓴맛 (0-100)
+        finish:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 여운 (0-100)
+        roasting_level:
+          type: string
+          enum: [light, medium_light, medium, medium_dark, dark]
+        brew_method:
+          type: string
+          description: "추출 방법 (pour over, espresso, aeropress 등)"
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          description: 총점 (0.0-5.0, 필수)
+        one_liner:
+          type: string
+          maxLength: 280
+          description: 한줄평
+        flavor_note_ids:
+          type: array
+          items:
+            type: integer
+          description: 플레이버 노트 ID 배열 (/api/flavor-notes에서 조회)
+
+    CoffeeTastingUpdateRequest:
+      type: object
+      properties:
+        tasted_at:
+          type: string
+          format: date
+        acidity:
+          type: integer
+        body:
+          type: integer
+        sweetness:
+          type: integer
+        bitterness:
+          type: integer
+        finish:
+          type: integer
+        roasting_level:
+          type: string
+        brew_method:
+          type: string
+        rating:
+          type: number
+        one_liner:
+          type: string
+        flavor_note_ids:
+          type: array
+          items:
+            type: integer
+
+    WineSearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        canonical_name:
+          type: string
+        producer:
+          type: string
+        wine_type:
+          type: string
+          enum: [red, rose, white_sparkling]
+        vintage_year:
+          type: integer
+          nullable: true
+        country_code:
+          type: string
+
+    WineCreateRequest:
+      type: object
+      required: [canonical_name, wine_type, country_id, region_id]
+      properties:
+        canonical_name:
+          type: string
+          description: |
+            와인 이름. 타입별 규칙:
+            - Type A (구세계): 아펠라시옹 + 크뤼/특수표기. 생산자 포함 금지. (예: Gevrey-Chambertin Vieilles Vignes)
+            - Type B (신세계): 생산자 + 품종. (예: Far Niente Cabernet Sauvignon)
+            - Type C (브랜드): 브랜드명. (예: Opus One)
+        wine_type:
+          type: string
+          enum: [red, rose, white_sparkling]
+          description: "⚠️ white 단독 사용 불가, white_sparkling 사용"
+        producer:
+          type: string
+          description: 생산자 (도멘/네고시앙/와이너리)
+        vintage_year:
+          type: integer
+          nullable: true
+          description: 빈티지 연도 (NV는 null)
+        grapes_text:
+          type: string
+          description: "품종 (쉼표 구분, 예: Pinot Noir)"
+        country_id:
+          type: integer
+          description: 국가 ID (/api/wineduck/countries에서 조회)
+        region_id:
+          type: integer
+          description: 지역 ID (/api/wineduck/countries/{id}/regions에서 조회)
+        appellation_id:
+          type: integer
+          description: 아펠라시옹 ID (/api/wineduck/regions/{id}/appellations에서 조회)
+
+    WineTastingCreateRequest:
+      type: object
+      properties:
+        wine_type:
+          type: string
+          enum: [red, rose, white_sparkling]
+          description: 와인 타입 (필수)
+        tasted_at:
+          type: string
+          format: date
+          description: "시음 날짜 (YYYY-MM-DD, 기본: 오늘)"
+        sweetness:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 당도 (1-5)
+        acidity:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 산도 (1-5)
+        body:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 바디 (1-5)
+        tannin:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 타닌 (1-5)
+        finish:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 여운 (1-5)
+        aroma_intensity:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: 향 강도 (1-6)
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          description: 총점 (0.0-5.0)
+        one_liner:
+          type: string
+          description: 한줄평
+        repurchase:
+          type: boolean
+          description: 재구매 의향
+        pairing_food:
+          type: string
+          description: 페어링 음식
+        color:
+          type: string
+          description: "색상 (ruby, garnet, purple 등)"
+        drink_window:
+          type: string
+          enum: [now, within_1_5y, over_5y]
+          description: 음용 적기
+        price_amount:
+          type: number
+          description: 가격
+        currency_code:
+          type: string
+          enum: [KRW, USD, EUR]
+          default: KRW
+        aromas:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+                enum: [custom, taxonomy]
+              custom_label:
+                type: string
+                description: source=custom일 때 향 이름
+              node_id:
+                type: integer
+                description: source=taxonomy일 때 아로마 DB ID
+          description: 향 목록 (커스텀 또는 택소노미)
+
+    WineTastingUpdateRequest:
+      type: object
+      properties:
+        sweetness:
+          type: integer
+        acidity:
+          type: integer
+        body:
+          type: integer
+        tannin:
+          type: integer
+        finish:
+          type: integer
+        aroma_intensity:
+          type: integer
+        rating:
+          type: number
+        one_liner:
+          type: string
+        repurchase:
+          type: boolean
+        pairing_food:
+          type: string
+        color:
+          type: string
+        drink_window:
+          type: string
+        aromas:
+          type: array
+          items:
+            type: object
