@@ -1,17 +1,17 @@
 ---
 name: wineduck-cellar
-description: Manage WineDuck wine cellar — list holdings, statistics, drink-window check, add wines from photos, and record consumption. Trigger when user mentions their cellar, wants to add a wine bottle they bought, check drinking windows, or log wine consumption. Requires authentication.
+description: Manage WineDuck wine cellar — list holdings, statistics, add wines from photos, and record consumption. Trigger when user mentions their cellar, wants to add a wine bottle they bought, or log wine consumption. Requires authentication.
 ---
 
 # WineDuck Cellar — 와인 셀러 관리
 
 WineDuck 플랫폼에서 내 와인 셀러(보유 와인)를 대화형으로 관리하는 스킬.
-보유 목록 조회, 통계 확인, 음용 임박 체크, 사진 기반 셀러 추가, 소비(오픈) 기록까지 지원.
+보유 목록 조회, 통계 확인, 사진 기반 셀러 추가, 소비(오픈) 기록까지 지원.
 인증 필요 (asterduck-auth 스킬과 함께 사용).
 
 ## Trigger
 
-다음 키워드에 반응: "셀러", "와인 셀러", "내 와인", "보유 와인", "셀러 추가", "셀러에 넣어", "셀러 등록", "음용 적기", "와인 오픈", "와인 마셨어", "다 마셨어", "wine cellar", "my cellar"
+다음 키워드에 반응: "셀러", "와인 셀러", "내 와인", "보유 와인", "셀러 추가", "셀러에 넣어", "셀러 등록", "와인 오픈", "와인 마셨어", "다 마셨어", "wine cellar", "my cellar"
 
 ## API Base URL
 
@@ -40,9 +40,9 @@ Authorization: Bearer {토큰}
 curl -s -H "Authorization: Bearer $TOKEN" \
   "https://coffeeduckbe-production.up.railway.app/api/cellar"
 
-# 레드 와인만 / 음용 임박순 / 2페이지
+# 레드 와인만 / 오래된 순 / 2페이지
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://coffeeduckbe-production.up.railway.app/api/cellar?wine_type=red&sort=drink_soon&page=2"
+  "https://coffeeduckbe-production.up.railway.app/api/cellar?wine_type=red&sort=oldest&page=2"
 
 # "Barolo" 검색 (이름 또는 생산자 부분 매칭)
 curl -s -H "Authorization: Bearer $TOKEN" \
@@ -59,7 +59,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 |----------|--------|-----|
 | `status` | `in_cellar` | `in_cellar` / `consumed` / `gifted` / `received` |
 | `wine_type` | (전체) | `red` / `rose` / `white_sparkling` |
-| `sort` | `newest` | `newest` / `oldest` / `drink_soon` / `purchase_date` |
+| `sort` | `newest` | `newest` / `oldest` / `purchase_date` |
 | `q` | — | 와인명(canonical_name) 또는 생산자(producer) 부분 매칭 |
 | `page` | 1 | 페이지 번호 |
 | `per_page` | 20 | 최대 100 |
@@ -79,8 +79,6 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | `purchase_price` | 구매가 (nullable) |
 | `currency` | 통화 (`KRW`/`USD`/`EUR`/`JPY` 등) |
 | `storage_location` | 보관 위치 (ex: "셀러 A칸 3번", nullable) |
-| `drink_from` | 음용 시작 적기 (YYYY-MM-DD, nullable) |
-| `drink_until` | 음용 마감 적기 (YYYY-MM-DD, nullable) |
 | `status` | `in_cellar` / `consumed` / `gifted` / `received` |
 | `consumed_at` | 소비 일시 (consume API 호출 시 자동 기록) |
 | `consumed_quantity` | 소비한 수량 |
@@ -122,8 +120,6 @@ curl -s -H "Authorization: Bearer $TOKEN" \
       "purchase_price": 48000,
       "currency": "KRW",
       "storage_location": "거실 셀러 2단",
-      "drink_from": "2026-04-01",
-      "drink_until": "2029-12-31",
       "status": "in_cellar",
       "note": "생일 기념 구매",
       "canonical_name": "Wachau Riesling Federspiel",
@@ -167,30 +163,14 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 }
 ```
 
-### 3. 음용 임박 목록
-
-이번 달 말 기준, `drink_until`이 도래한 보유 와인.
-
-```bash
-# 최대 10병
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://coffeeduckbe-production.up.railway.app/api/cellar/expiring"
-
-# n으로 개수 조정 (1~100)
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://coffeeduckbe-production.up.railway.app/api/cellar/expiring?n=20"
-```
-
-응답은 목록과 동일한 와인 JOIN 구조. `drink_until ASC` 정렬.
-
-### 4. 셀러 엔트리 상세
+### 3. 셀러 엔트리 상세
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" \
   "https://coffeeduckbe-production.up.railway.app/api/cellar/23"
 ```
 
-### 5. 셀러 등록 — 와인 사진으로 바로 추가
+### 4. 셀러 등록 — 와인 사진으로 바로 추가
 
 **이 스킬의 핵심 플로우.** 사용자가 와인 사진을 주고 "셀러에 추가해줘"라고 하면 아래 순서로 진행.
 
@@ -237,8 +217,6 @@ curl -s -X POST "https://coffeeduckbe-production.up.railway.app/api/cellar" \
     "purchase_price": 48000,
     "currency": "KRW",
     "storage_location": "거실 셀러 2단",
-    "drink_from": "2026-04-01",
-    "drink_until": "2029-12-31",
     "note": "생일 기념 구매"
   }'
 ```
@@ -265,8 +243,6 @@ HTTP 201 반환.
 | `purchase_price` | ❌ | 숫자 |
 | `currency` | ❌ | 기본 `KRW`. `USD`/`EUR`/`JPY` 등 |
 | `storage_location` | ❌ | 자유 텍스트 |
-| `drink_from` | ❌ | 음용 시작 적기 YYYY-MM-DD |
-| `drink_until` | ❌ | 음용 마감 적기 YYYY-MM-DD |
 | `note` | ❌ | 메모 |
 
 #### 사용자에게 확인받기
@@ -279,9 +255,9 @@ HTTP 201 반환.
 > - 빈티지: 2019
 > - 레드 / Nebbiolo
 >
-> 이 와인을 셀러에 1병 추가할게. 구매일·가격·음용적기도 있으면 알려줘."
+> 이 와인을 셀러에 1병 추가할게. 구매일·가격도 있으면 알려줘."
 
-### 6. 셀러 엔트리 수정
+### 5. 셀러 엔트리 수정
 
 ```bash
 curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
@@ -291,12 +267,11 @@ curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
 ```
 
 수정 가능 필드 (부분 수정, 하나 이상 필수):
-`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`,
-`drink_from`, `drink_until`, `status`, `note`
+`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `status`, `note`
 
 > `consumed_at`, `consumed_quantity`, `tasting_id`는 수정 API로 변경 불가 — **소비 API 전용**.
 
-### 7. 소비(오픈) 기록
+### 6. 소비(오픈) 기록
 
 사용자가 "어제 #23 마셨어" / "다 마셨어" 등을 말하면 consume API로 처리. 수량이 원자적으로 차감됨 (`SELECT FOR UPDATE` 락).
 
@@ -335,7 +310,7 @@ curl -s -X POST "https://coffeeduckbe-production.up.railway.app/api/cellar/23/co
 
 > 전량 소비(`remaining_quantity == 0`)일 때만 `status` / `consumed_at` / `consumed_quantity` / `tasting_id` 필드가 기록됨. 부분 소비는 수량만 차감.
 
-### 8. 소프트 삭제
+### 7. 소프트 삭제
 
 ```bash
 curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
@@ -366,17 +341,7 @@ curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/cellar/23"
 GET /api/cellar?wine_type=red&per_page=50
 ```
 
-→ 각 와인의 `canonical_name` · `vintage_year` · `producer` · `appellation_name_ko` · `quantity` · `drink_until` 요약 테이블로 출력.
-
-### 음용 임박 체크
-
-> 사용자: "이번 달 안에 마셔야 할 와인 뭐 있어?"
-
-```
-GET /api/cellar/expiring?n=20
-```
-
-→ `drink_until` 기준 오름차순 리스트 반환.
+→ 각 와인의 `canonical_name` · `vintage_year` · `producer` · `appellation_name_ko` · `quantity` 요약 테이블로 출력.
 
 ### 소비 기록
 
@@ -390,6 +355,5 @@ GET /api/cellar/expiring?n=20
 
 - **삭제 ≠ 소비**: 다 마신 와인은 **consume API**로 기록해야 "얼마나 마셨는지" 히스토리가 남음. DELETE는 잘못 등록한 경우에만.
 - **wine_id 없이는 등록 불가**: 셀러 API는 와인 자체를 등록하지 않음. 반드시 wineduck-search → (없으면) wineduck-wine 순으로 wine_id 확보.
-- **sort=drink_soon은 `drink_until`이 null인 엔트리를 뒤로 밀지 않음** — MySQL의 NULL 정렬은 오름차순에서 제일 앞. 음용 임박만 보고 싶으면 `/cellar/expiring`을 쓰는 게 정확.
 - **통화(currency)는 등록 시 결정**: 수정 API로 바꿀 수는 있지만 `purchase_price` 숫자는 통화와 함께 해석해야 함.
 - **본인 엔트리만 접근 가능**: 모든 API가 `user_id`로 필터링. 다른 사용자의 엔트리 조회/수정 시도는 404.

@@ -11,7 +11,7 @@ WineDuck은 와인 덕후를 위한 테이스팅 노트 앱입니다. 이 스킬
 | [search](./search/SKILL.md) | 와인 검색, 지역/아펠라시옹 탐색 | 불필요 |
 | [tasting](./tasting/SKILL.md) | 테이스팅 노트 등록/조회/수정/삭제 | 필요 |
 | [wine](./wine/SKILL.md) | 와인 등록, 중복 검사, 명명 규칙 | 필요 |
-| [cellar](./cellar/SKILL.md) | 셀러 목록/통계/음용 임박, 사진으로 셀러 추가, 소비 기록 | 필요 |
+| [cellar](./cellar/SKILL.md) | 셀러 목록/통계, 사진으로 셀러 추가, 소비 기록 | 필요 |
 
 > 인증은 공용 스킬 [`auth`](../auth/SKILL.md)를 사용합니다.
 
@@ -47,7 +47,6 @@ cp -r asterduck_skillset/claude/wineduck/cellar ~/.claude/skills/wineduck-cellar
 ### 셀러 관리
 > (라벨 사진 첨부) "이거 셀러에 추가해줘. 어제 8만원에 샀어"
 > "내 셀러에 보유 중인 레드 와인 보여줘"
-> "이번 달 안에 마셔야 할 와인 뭐 있어?"
 > "#23 Wachau Riesling 다 마셨어"
 
 ## 스킬 간 연동

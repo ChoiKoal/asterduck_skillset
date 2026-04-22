@@ -64,7 +64,7 @@ docker run -p 8080:8080 -e SWAGGER_JSON=/api/asterduck-api.yaml -v $(pwd):/api s
 | 팔레트 범위 | 0-100 | 1-5 |
 | 팔레트 축 | acidity, body, sweetness, bitterness, finish | sweetness, acidity, body, tannin, finish |
 | 향미 입력 | flavor_note_ids (마스터 테이블 ID) | aromas (custom label or taxonomy node_id) |
-| 추가 필드 | roasting_level, brew_method | aroma_intensity, color, drink_window, pairing_food, repurchase |
+| 추가 필드 | roasting_level, brew_method | aroma_intensity, color, pairing_food, repurchase |
 
 ## Base URL
 

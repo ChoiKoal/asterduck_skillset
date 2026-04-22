@@ -870,7 +870,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [newest, oldest, drink_soon, purchase_date]
+            enum: [newest, oldest, purchase_date]
             default: newest
         - name: q
           in: query
@@ -965,39 +965,6 @@ paths:
                           type: string
                         bottle_count:
                           type: integer
-
-  /cellar/expiring:
-    get:
-      tags: [WineDuck - Cellar]
-      summary: 음용 임박 와인 목록 (이번 달 말 기준)
-      operationId: cellarExpiring
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: n
-          in: query
-          description: 반환 최대 건수
-          schema:
-            type: integer
-            default: 10
-            minimum: 1
-            maximum: 100
-      responses:
-        "200":
-          description: 음용 임박 와인
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  entries:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/CellarEntry"
-                  count:
-                    type: integer
 
   /cellar/{entry_id}:
     get:
@@ -1479,10 +1446,6 @@ components:
         color:
           type: string
           description: "색상 (ruby, garnet, purple 등)"
-        drink_window:
-          type: string
-          enum: [now, within_1_5y, over_5y]
-          description: 음용 적기
         price_amount:
           type: number
           description: 가격
@@ -1531,8 +1494,6 @@ components:
           type: string
         color:
           type: string
-        drink_window:
-          type: string
         aromas:
           type: array
           items:
@@ -1563,14 +1524,6 @@ components:
           example: KRW
         storage_location:
           type: string
-          nullable: true
-        drink_from:
-          type: string
-          format: date
-          nullable: true
-        drink_until:
-          type: string
-          format: date
           nullable: true
         status:
           type: string
@@ -1670,12 +1623,6 @@ components:
           default: KRW
         storage_location:
           type: string
-        drink_from:
-          type: string
-          format: date
-        drink_until:
-          type: string
-          format: date
         note:
           type: string
 
@@ -1695,12 +1642,6 @@ components:
           type: string
         storage_location:
           type: string
-        drink_from:
-          type: string
-          format: date
-        drink_until:
-          type: string
-          format: date
         status:
           type: string
           enum: [in_cellar, consumed, gifted, received]
