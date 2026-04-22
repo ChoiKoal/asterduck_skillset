@@ -20,7 +20,7 @@
 |--------|------|---------|
 | [Auth](./claude/auth/) | 공용 인증 (로그인, 회원가입, 토큰) | 1 |
 | [CoffeeDuck](./claude/coffeeduck/) | 커피 검색, 등록, 테이스팅 노트 | 3 |
-| [WineDuck](./claude/wineduck/) | 와인 검색, 등록, 테이스팅 노트 | 3 |
+| [WineDuck](./claude/wineduck/) | 와인 검색, 등록, 테이스팅 노트, 셀러 관리 | 4 |
 | [OpenAPI](./openapi/) | 전체 API 스펙 (GPTs/Gemini/범용) | 1 |
 
 ## Quick Start
@@ -42,6 +42,7 @@ cp -r asterduck_skillset/claude/coffeeduck/coffee ~/.claude/skills/coffeeduck-co
 cp -r asterduck_skillset/claude/wineduck/search ~/.claude/skills/wineduck-search
 cp -r asterduck_skillset/claude/wineduck/tasting ~/.claude/skills/wineduck-tasting
 cp -r asterduck_skillset/claude/wineduck/wine ~/.claude/skills/wineduck-wine
+cp -r asterduck_skillset/claude/wineduck/cellar ~/.claude/skills/wineduck-cellar
 ```
 
 ### OpenAI Codex — 스킬 설치
@@ -82,6 +83,8 @@ cp -r asterduck_skillset/codex/* .agents/skills/
 "부르고뉴 피노 누아 검색해줘"
 "Gevrey-Chambertin Vieilles Vignes 2023 등록해줘. 쟝테팡시오 도멘."
 "어제 마신 와인 기록할게. 산미 강하고 타닌 부드러워. 체리랑 오크 향. 4점."
+(라벨 사진 첨부) "이거 셀러에 추가해줘. 어제 8만원에 샀어"
+"이번 달 안에 마셔야 할 와인 뭐 있어?"
 ```
 
 ## 구조
@@ -100,7 +103,8 @@ asterduck_skillset/
 │       ├── README.md
 │       ├── search/SKILL.md
 │       ├── tasting/SKILL.md
-│       └── wine/SKILL.md
+│       ├── wine/SKILL.md
+│       └── cellar/SKILL.md
 ├── codex/                 # OpenAI Codex 스킬
 │   ├── README.md
 │   ├── auth/SKILL.md
@@ -109,7 +113,8 @@ asterduck_skillset/
 │   ├── coffeeduck-coffee/SKILL.md
 │   ├── wineduck-search/SKILL.md
 │   ├── wineduck-tasting/SKILL.md
-│   └── wineduck-wine/SKILL.md
+│   ├── wineduck-wine/SKILL.md
+│   └── wineduck-cellar/SKILL.md
 ├── openapi/               # OpenAPI 스펙 (GPTs/Gemini/범용)
 │   ├── asterduck-api.yaml
 │   └── README.md
@@ -122,7 +127,7 @@ asterduck_skillset/
 - **인증**: JWT Bearer Token (24시간 유효)
 - **응답 형식**: JSON
 - **다국어**: `Accept-Language` 헤더 지원 (ko, ja, en)
-- **총 엔드포인트**: 31개
+- **총 엔드포인트**: 38개
 
 ## 서비스
 
