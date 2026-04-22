@@ -59,6 +59,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | `page` | 1 | 페이지 번호 |
 | `per_page` | 20 | 최대 100 |
 
+> ⚠️ **`wine_type` 주의**: 화이트 와인과 스파클링 와인은 같은 카테고리 `white_sparkling`로 묶입니다. `white` 단독 값은 사용할 수 없습니다.
+
 #### 응답 구조 (각 entry 객체)
 
 **셀러 엔트리 필드:**

@@ -175,6 +175,8 @@ curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/wineduck/t
 | 통화 | currency_code | KRW / USD / EUR (기본: KRW) | ❌ |
 | 향 | aromas | 배열 | ❌ |
 
+> ⚠️ **`wine_type` 주의**: 화이트 와인과 스파클링 와인은 같은 카테고리 `white_sparkling`로 묶입니다. `white` 단독 값은 사용할 수 없습니다.
+
 ## 향 (Aromas) 등록 형식
 
 ```json
