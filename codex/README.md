@@ -41,7 +41,7 @@ cp -r asterduck_skillset/codex/auth ~/.agents/skills/asterduck-auth
 | `coffeeduck-tasting` | 커피 테이스팅 노트 CRUD | 필요 |
 | `coffeeduck-coffee` | 커피 등록, 중복 검사 | 필요 |
 | `wineduck-search` | 와인 검색, 지역/아펠라시옹 탐색 | 불필요 |
-| `wineduck-tasting` | 와인 테이스팅 노트 CRUD | 필요 |
+| `wineduck-tasting` | 와인 테이스팅 노트 CRUD + 취향 통계/커뮤니티 평균 집계 | 필요 |
 | `wineduck-wine` | 와인 등록, 명명 규칙 | 필요 |
 | `wineduck-cellar` | 셀러 목록/통계, 사진으로 추가, 소비 기록 | 필요 |
 
