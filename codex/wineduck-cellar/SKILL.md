@@ -57,12 +57,22 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 파라미터 | 기본값 | 값 |
 |----------|--------|-----|
-| `status` | `in_cellar` | `in_cellar` / `consumed` / `gifted` / `received` |
+| `status` | `in_cellar` | `in_cellar` / `consumed` / `gifted` / `received` (쉼표 구분 다중값 가능: `in_cellar,received`) |
 | `wine_type` | (전체) | `red` / `rose` / `white_sparkling` |
-| `sort` | `newest` | `newest` / `oldest` / `purchase_date` |
+| `sort` | `newest` | `newest` / `oldest` / `drink_soon` / `purchase_date` / `consumed_recent` |
 | `q` | — | 와인명(canonical_name) 또는 생산자(producer) 부분 매칭 |
 | `page` | 1 | 페이지 번호 |
 | `per_page` | 20 | 최대 100 |
+
+#### 정렬 옵션 의미
+
+| 값 | 정렬 기준 | 추천 사용처 |
+|----|-----------|-------------|
+| `newest` | 셀러 등록일 최신순 (기본) | 보유 목록 기본 화면 |
+| `oldest` | 셀러 등록일 오래된 순 | 오래 묵은 와인 확인 |
+| `drink_soon` | `drink_until` ASC (음용 적기 임박순) | 빨리 마셔야 하는 와인 정렬 |
+| `purchase_date` | 구매일 최신순 | 최근에 산 와인 확인 |
+| `consumed_recent` | `consumed_at` DESC (최근 마신 순) | `status=consumed` 조회 시 추천 |
 
 > ⚠️ **`wine_type` 주의**: 화이트 와인과 스파클링 와인은 같은 카테고리 `white_sparkling`로 묶입니다. `white` 단독 값은 사용할 수 없습니다.
 
@@ -80,11 +90,15 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | `currency` | 통화 (`KRW`/`USD`/`EUR`/`JPY` 등) |
 | `storage_location` | 보관 위치 (ex: "셀러 A칸 3번", nullable) |
 | `status` | `in_cellar` / `consumed` / `gifted` / `received` |
+| `drink_from` | 음용 적기 시작일 (YYYY-MM-DD, nullable) |
+| `drink_until` | 음용 적기 마감일 (YYYY-MM-DD, nullable) — `drink_soon` 정렬 기준 |
 | `consumed_at` | 소비 일시 (consume API 호출 시 자동 기록) |
 | `consumed_quantity` | 소비한 수량 |
 | `tasting_id` | 연결된 테이스팅 노트 ID (nullable) |
 | `note` | 개인 메모 (nullable) |
 | `created_at` / `updated_at` | 등록/수정 일시 |
+
+> ℹ️ **`purchase_price` 노출 정책**: BE는 항상 반환하지만, 공식 서비스 UI(셀러 목록/상세/홈)에서는 의도적으로 숨김. 가격 데이터는 DB 보관용이며 통계(`/cellar/stats.total_value`)에만 활용.
 
 **와인 정보 (JOIN):**
 
@@ -160,6 +174,33 @@ curl -s -H "Authorization: Bearer $TOKEN" \
     { "country_name": "France", "country_name_ko": "프랑스", "iso_code": "FR", "bottle_count": 11 },
     { "country_name": "Italy", "country_name_ko": "이탈리아", "iso_code": "IT", "bottle_count": 5 }
   ]
+}
+```
+
+### 2-1. 음용 적기 임박 와인 (drink-soon 알림용)
+
+`drink_until` 이 이미 지났거나 이번 달 안에 도래하는 보유 와인 목록.
+홈 화면 "곧 마셔야 할 와인" 카드에 사용.
+
+```bash
+# 기본 10건
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://coffeeduckbe-production.up.railway.app/api/cellar/expiring"
+
+# 최대 50건
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://coffeeduckbe-production.up.railway.app/api/cellar/expiring?n=50"
+```
+
+**필터 기준**: `status = 'in_cellar' AND drink_until IS NOT NULL AND drink_until <= LAST_DAY(NOW())`
+**정렬**: `drink_until ASC`
+
+**응답:**
+```json
+{
+  "success": true,
+  "entries": [ /* 셀러 엔트리 객체 (와인 JOIN 포함) */ ],
+  "count": 3
 }
 ```
 
@@ -243,6 +284,8 @@ HTTP 201 반환.
 | `purchase_price` | ❌ | 숫자 |
 | `currency` | ❌ | 기본 `KRW`. `USD`/`EUR`/`JPY` 등 |
 | `storage_location` | ❌ | 자유 텍스트 |
+| `drink_from` | ❌ | 음용 적기 시작일 (YYYY-MM-DD) |
+| `drink_until` | ❌ | 음용 적기 마감일 (YYYY-MM-DD) |
 | `note` | ❌ | 메모 |
 
 #### 사용자에게 확인받기
@@ -267,7 +310,7 @@ curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
 ```
 
 수정 가능 필드 (부분 수정, 하나 이상 필수):
-`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `status`, `note`
+`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `drink_from`, `drink_until`, `status`, `note`
 
 > `consumed_at`, `consumed_quantity`, `tasting_id`는 수정 API로 변경 불가 — **소비 API 전용**.
 
