@@ -41,6 +41,8 @@ tags:
     description: 와인 등록
   - name: WineDuck - Cellar
     description: 와인 셀러(보유 와인) 관리
+  - name: WineDuck - Discovery
+    description: 커뮤니티 팔레트 집계 / 사용자 취향 기반 추천
 
 # ──────────────────────────────────────────
 # Auth
@@ -845,6 +847,102 @@ paths:
           description: 테이스팅 목록
 
 # ──────────────────────────────────────────
+# WineDuck - Discovery (community aggregates / personalized recommendations)
+# ──────────────────────────────────────────
+  /wineduck/wines/aggregates/palate-avg:
+    get:
+      tags: [WineDuck - Discovery]
+      summary: 커뮤니티 평균 팔레트 집계
+      description: |
+        전체(또는 wine_type별) 테이스팅 노트의 5축 팔레트(sweetness/acidity/body/tannin/finish) 평균.
+        FE 레이더 차트 오버레이 / 비교 기준선 용도. 인증 불필요.
+      operationId: getCommunityPalateAvg
+      parameters:
+        - name: wine_type
+          in: query
+          description: 타입 필터 (없으면 전체 평균)
+          schema:
+            type: string
+            enum: [red, rose, white_sparkling]
+      responses:
+        "200":
+          description: 평균 팔레트 + 표본 수
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  avg_palate:
+                    type: object
+                    description: 5축 평균 (각 축 0~5, 표본 없으면 null)
+                    properties:
+                      sweetness: { type: number, nullable: true }
+                      acidity:   { type: number, nullable: true }
+                      body:      { type: number, nullable: true }
+                      tannin:    { type: number, nullable: true }
+                      finish:    { type: number, nullable: true }
+                  sample_count: { type: integer, description: 집계에 포함된 테이스팅 노트 수 }
+                  wine_type:    { type: string, description: 적용된 필터 (`all` if none) }
+
+  /wineduck/users/{user_id}/recommendations:
+    get:
+      tags: [WineDuck - Discovery]
+      summary: 사용자 취향 기반 와인 추천 TOP N
+      description: |
+        팔레트 유사도(주 신호) + 선호 타입/국가/품종 보너스로 점수화된 추천.
+        본인만 조회 가능 (path `user_id` 와 토큰 user_id 일치 검증).
+        테이스팅 노트가 `min_count_required`(기본 3) 미만이면 `need_more: true` + `wines: []` 반환.
+      operationId: getUserRecommendations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: 반환 개수 (기본 8, 최대 20)
+          schema:
+            type: integer
+            default: 8
+            minimum: 1
+            maximum: 20
+      responses:
+        "200":
+          description: 추천 결과 (게이팅 미달 시 빈 배열 + need_more=true)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  wines:
+                    type: array
+                    description: 점수 DESC 정렬된 추천 리스트
+                    items:
+                      type: object
+                      properties:
+                        wine:
+                          type: object
+                          description: WineListItem 호환 페이로드 (id, canonical_name, producer, wine_type, vintage_year, country/region/appellation, community_palate 등)
+                        score:              { type: number, description: 종합 점수 }
+                        palate_similarity:  { type: number, description: 0~1 정규화 유사도 }
+                        reasons:
+                          type: array
+                          description: i18n 적용된 매치 사유 태그 (`#비슷한 팔레트`, `#레드`, `#프랑스`, `#Nebbiolo` 등)
+                          items: { type: string }
+                  need_more:           { type: boolean, description: 게이팅 미달 시 true }
+                  min_count_required:  { type: integer, description: 최소 테이스팅 수 (기본 3) }
+                  user_tasting_count:  { type: integer }
+                  user_palate_count:   { type: integer, description: 평점 4점 이상 와인 수 (팔레트 학습 시그널) }
+                  candidate_pool_size: { type: integer, description: 스코어링에 들어간 후보 와인 수 }
+        "403":
+          description: 본인이 아닌 다른 user_id 조회 시도
+
+# ──────────────────────────────────────────
 # WineDuck - Cellar
 # ──────────────────────────────────────────
   /cellar:
@@ -857,10 +955,14 @@ paths:
       parameters:
         - name: status
           in: query
+          description: |
+            기본 `in_cellar`. 단일 값 또는 쉼표로 다중 값 지정 가능.
+            허용 값: `in_cellar` / `consumed` / `gifted` / `received`.
+            예: `in_cellar,received` (보유 + 선물받음).
           schema:
             type: string
-            enum: [in_cellar, consumed, gifted, received]
             default: in_cellar
+            example: in_cellar,received
         - name: wine_type
           in: query
           schema:
@@ -868,9 +970,15 @@ paths:
             enum: [red, rose, white_sparkling]
         - name: sort
           in: query
+          description: |
+            정렬 옵션.
+            - `newest` / `oldest`: 등록일 기준
+            - `purchase_date`: 구매일 DESC
+            - `drink_soon`: `drink_until` ASC (음용 적기 임박순)
+            - `consumed_recent`: `consumed_at` DESC (`status=consumed` 조합 권장)
           schema:
             type: string
-            enum: [newest, oldest, purchase_date]
+            enum: [newest, oldest, purchase_date, drink_soon, consumed_recent]
             default: newest
         - name: q
           in: query
@@ -965,6 +1073,40 @@ paths:
                           type: string
                         bottle_count:
                           type: integer
+
+  /cellar/expiring:
+    get:
+      tags: [WineDuck - Cellar]
+      summary: 음용 적기 임박 와인 (drink_until ≤ 이번 달 말)
+      description: |
+        `status = 'in_cellar' AND drink_until IS NOT NULL AND drink_until <= LAST_DAY(NOW())` 조건의 보유 와인.
+        `drink_until ASC` 정렬. 홈 화면 "곧 마셔야 할 와인" 카드용.
+      operationId: listExpiringCellarEntries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: n
+          in: query
+          description: 반환 개수 (기본 10, 최대 50)
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: 임박 와인 목록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  entries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CellarEntry"
+                  count: { type: integer }
 
   /cellar/{entry_id}:
     get:
@@ -1528,6 +1670,16 @@ components:
         status:
           type: string
           enum: [in_cellar, consumed, gifted, received]
+        drink_from:
+          type: string
+          format: date
+          nullable: true
+          description: 음용 적기 시작일
+        drink_until:
+          type: string
+          format: date
+          nullable: true
+          description: 음용 적기 마감일 — `sort=drink_soon` / `/cellar/expiring` 기준
         consumed_at:
           type: string
           format: date-time
@@ -1623,6 +1775,14 @@ components:
           default: KRW
         storage_location:
           type: string
+        drink_from:
+          type: string
+          format: date
+          description: 음용 적기 시작일
+        drink_until:
+          type: string
+          format: date
+          description: 음용 적기 마감일
         note:
           type: string
 
@@ -1645,6 +1805,14 @@ components:
         status:
           type: string
           enum: [in_cellar, consumed, gifted, received]
+        drink_from:
+          type: string
+          format: date
+          nullable: true
+        drink_until:
+          type: string
+          format: date
+          nullable: true
         note:
           type: string
 

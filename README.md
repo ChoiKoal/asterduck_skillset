@@ -1,6 +1,6 @@
 # Aster.duck AI Skillset
 
-[![version](https://img.shields.io/badge/version-0.3.0-burgundy)](./CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.4.0-burgundy)](./CHANGELOG.md)
 [![release](https://img.shields.io/github/v/release/ChoiKoal/asterduck_skillset?display_name=tag&sort=semver)](https://github.com/ChoiKoal/asterduck_skillset/releases)
 
 [Aster.duck](https://asterduck.koalstudio.com) 플랫폼을 AI 에이전트로 활용하기 위한 스킬 & API 스펙 모음입니다.
@@ -28,6 +28,7 @@ cp -rn /tmp/asterduck_skillset/claude/wineduck/search ~/.claude/skills/wineduck-
 cp -rn /tmp/asterduck_skillset/claude/wineduck/tasting ~/.claude/skills/wineduck-tasting && \
 cp -rn /tmp/asterduck_skillset/claude/wineduck/wine ~/.claude/skills/wineduck-wine && \
 cp -rn /tmp/asterduck_skillset/claude/wineduck/cellar ~/.claude/skills/wineduck-cellar && \
+cp -rn /tmp/asterduck_skillset/claude/wineduck/discovery ~/.claude/skills/wineduck-discovery && \
 echo "✅ Aster.duck skills installed to ~/.claude/skills/"
 ```
 
@@ -71,8 +72,11 @@ Each skill is triggered by specific user intent. AI agents should invoke the app
 | `wineduck-wine` | "와인 등록", "와인 추가", "register wine" | **Yes** |
 | `wineduck-cellar` | "셀러", "내 와인", "셀러에 추가", "cellar", "consume" | **Yes** |
 | `wineduck-tasting` | "와인 마셨", "와인 테이스팅", "wine tasting note" | **Yes** |
+| `wineduck-discovery` | "추천 와인", "내 취향", "비슷한 팔레트", "커뮤니티 평균", "wine recommendation" | Partial¹ |
 
 > 🔐 **Auth flow**: Any skill marked "Yes" requires a JWT. Call `asterduck-auth` first → save token → pass as `Authorization: Bearer {token}`.
+>
+> ¹ `wineduck-discovery`: 커뮤니티 평균 팔레트는 인증 불필요, 사용자 추천은 토큰 필요.
 
 ---
 
@@ -121,7 +125,7 @@ Each skill is triggered by specific user intent. AI agents should invoke the app
 |--------|------|---------|
 | [Auth](./claude/auth/) | 공용 인증 (로그인, 회원가입, 토큰) | 1 |
 | [CoffeeDuck](./claude/coffeeduck/) | 커피 검색, 등록, 테이스팅 노트 | 3 |
-| [WineDuck](./claude/wineduck/) | 와인 검색, 등록, 테이스팅, 셀러 | 4 |
+| [WineDuck](./claude/wineduck/) | 와인 검색, 등록, 테이스팅, 셀러, 추천 | 5 |
 | [OpenAPI Spec](./openapi/) | 전체 API 스펙 (GPTs/Gemini/범용) | 1 |
 
 ---
@@ -164,7 +168,8 @@ asterduck_skillset/
 │       ├── search/SKILL.md
 │       ├── tasting/SKILL.md
 │       ├── wine/SKILL.md
-│       └── cellar/SKILL.md
+│       ├── cellar/SKILL.md
+│       └── discovery/SKILL.md
 ├── codex/                      # OpenAI Codex / Cursor 스킬
 │   ├── README.md
 │   ├── auth/SKILL.md
@@ -174,7 +179,8 @@ asterduck_skillset/
 │   ├── wineduck-search/SKILL.md
 │   ├── wineduck-tasting/SKILL.md
 │   ├── wineduck-wine/SKILL.md
-│   └── wineduck-cellar/SKILL.md
+│   ├── wineduck-cellar/SKILL.md
+│   └── wineduck-discovery/SKILL.md
 ├── openapi/                    # OpenAPI 스펙 (GPTs/Gemini/범용)
 │   ├── asterduck-api.yaml
 │   └── README.md
