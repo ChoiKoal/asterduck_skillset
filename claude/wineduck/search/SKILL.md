@@ -142,36 +142,3 @@ WineDuck의 지역 탐색은 최대 4단계 계층:
 | rose | 로제 와인 |
 | white_sparkling | 화이트 / 스파클링 와인 |
 
-## 운영(Admin) — 지역/아펠라시옹 정리
-
-> ⚠️ super-admin 권한 토큰 필요. 일반 사용자는 호출 금지.
-> 중복 지역/아펠라시옹 정리 등 데이터 클린업 용도.
-
-### 지역 삭제
-
-참조하는 와인 / 아펠라시옹 / 하위 지역이 있으면 409로 거부.
-
-```bash
-curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/{region_id}" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-```
-
-**거부 응답 (409):**
-```json
-{
-  "success": false,
-  "error": "참조 중인 데이터가 있어 삭제할 수 없습니다.",
-  "references": { "wines": 3, "appellations": 5, "sub_regions": 0 }
-}
-```
-
-### 아펠라시옹 삭제
-
-참조하는 와인이 있으면 409로 거부.
-
-```bash
-curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/wineduck/appellations/{appellation_id}" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-```
-
-**삭제 절차 권장 순서**: 와인의 region/appellation을 먼저 정상 ID로 옮기고(UPDATE), 그 다음 빈 region/appellation을 삭제.

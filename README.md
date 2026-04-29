@@ -1,8 +1,14 @@
 # Aster.duck AI Skillset
 
+[![version](https://img.shields.io/badge/version-0.3.0-burgundy)](./CHANGELOG.md)
+[![release](https://img.shields.io/github/v/release/ChoiKoal/asterduck_skillset?display_name=tag&sort=semver)](https://github.com/ChoiKoal/asterduck_skillset/releases)
+
 [Aster.duck](https://asterduck.koalstudio.com) 플랫폼을 AI 에이전트로 활용하기 위한 스킬 & API 스펙 모음입니다.
 
 커피와 와인 테이스팅 노트를 AI를 통해 검색, 등록, 관리할 수 있습니다.
+
+> 🆕 **최신 버전 / 업데이트 노트** → [CHANGELOG.md](./CHANGELOG.md)
+> 현재 버전은 [`VERSION`](./VERSION) 파일로 관리합니다 (Semantic Versioning).
 
 ---
 
