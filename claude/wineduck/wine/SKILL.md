@@ -136,9 +136,23 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
 - ❌ Type A에서 생산자를 이름에 붙이기
 - ❌ Type B에서 품종명만 단독 사용
 
-## 지역/아펠라시옹 ID 조회
+## 지역/아펠라시옹 ID 매핑 (중요)
 
-등록 시 country_id, region_id를 정확히 매핑해야 탐색 페이지에서 검색 가능.
+> 🚨 **반드시 기존 ID를 우선 매핑할 것.** 같은 region/appellation을 새로 만들면 데이터가 오염되고, 탐색 페이지에서 분리되어 표시됨.
+
+### 매핑 규칙 (등록 전 필수 절차)
+
+1. `GET /api/wineduck/countries` 로 국가 목록을 받아 **이름 정확 매칭**으로 country_id 확정
+2. `GET /api/wineduck/countries/{country_id}/regions` 로 지역 목록을 받아 매칭
+   - 부르고뉴처럼 sub-region이 있으면 `?include_sub=true` 옵션 사용 가능
+   - 이름이 미묘하게 다른 케이스(예: "Côte Chalonnaise" vs "Cote Chalonnaise" vs "코트 샬로네즈") **우선 한글명/영문명 둘 다 비교**해서 동일 지역 ID 사용
+3. `GET /api/wineduck/regions/{region_id}/appellations` 로 아펠라시옹 매칭
+4. **기존 ID가 없을 때만** 신규 추가 — 그것도 단순 추측 금지. 사용자에게 "이 아펠라시옹이 새로 등록되어야 하는데, 정말 신규가 맞아?" 확인 후 진행
+
+### ❌ 절대 하지 말 것
+- "비슷해 보이지만 다른 이름이라 새로 만든다" — 중복 region/appellation의 주범
+- "검색했더니 첫 페이지에 없어서 새로 만든다" — 페이지네이션/include_sub 확인 안 한 채로 신규 등록 금지
+- 표기 흔들림(악센트, 한글 표기, 띄어쓰기)으로 다른 ID라고 판단
 
 ### 국가 조회
 ```bash
@@ -147,7 +161,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries"
 
 ### 지역 조회
 ```bash
-# 프랑스의 지역
+# 프랑스의 지역 (sub-region 포함)
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries/1/regions"
 ```
 
@@ -155,6 +169,9 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries/1
 ```bash
 # 코트 드 뉘의 아펠라시옹
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/5/appellations"
+
+# 부르고뉴 전체(하위 지역 포함)
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/appellations?include_sub=true"
 ```
 
 ## wine_type 값
@@ -180,5 +197,6 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/5/a
 ## 주의사항
 
 - **중복 확인 없이 등록하지 말 것** — 같은 와인이 여러 개 생기면 데이터 오염
+- **기존 region/appellation ID 우선** — 검색 결과를 충분히 확인한 뒤에야 신규 추가. 표기 흔들림으로 신규 ID를 만들면 운영자가 사후에 정리해야 함
 - producer + 아펠라시옹 + 빈티지가 같으면 이름이 약간 달라도 동일 와인으로 판단
 - country_id, region_id는 필수 — 없으면 탐색 페이지에서 검색 불가
