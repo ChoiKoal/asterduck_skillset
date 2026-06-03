@@ -1378,6 +1378,18 @@ components:
         grapes_text:
           type: string
           description: "품종 (쉼표 구분, 예: Pinot Noir)"
+        drink_from_year:
+          type: integer
+          nullable: true
+          description: "음용 적기 시작 연도 (예: 2026). 와인 자체의 권장 음용 시기(셀러 병 단위와 별개)."
+        drink_until_year:
+          type: integer
+          nullable: true
+          description: "음용 적기 종료 연도 (예: 2034)."
+        peak_year:
+          type: integer
+          nullable: true
+          description: "음용 피크 연도 (예: 2030). 정합성: drink_from_year ≤ peak_year ≤ drink_until_year (연도 1900~2100)."
         country_id:
           type: integer
           description: 국가 ID (/api/wineduck/countries에서 조회)
