@@ -284,9 +284,9 @@ HTTP 201 반환.
 | `purchase_price` | ❌ | 숫자 |
 | `currency` | ❌ | 기본 `KRW`. `USD`/`EUR`/`JPY` 등 |
 | `storage_location` | ❌ | 자유 텍스트 |
-| `drink_from` | ❌ | 음용 적기 시작일 (YYYY-MM-DD) |
-| `drink_until` | ❌ | 음용 적기 마감일 (YYYY-MM-DD) |
 | `note` | ❌ | 메모 |
+
+> ⚠️ 음용 적기는 셀러가 아니라 **와인 카탈로그 속성**이다. 셀러 등록 시 `drink_from`/`drink_until`(날짜)는 입력하지 않는다(폐기). 음용 적기는 와인 등록 스킬에서 `drink_from_year`/`drink_until_year`/`peak_year`(연도)로 설정하고, 셀러는 그 값을 읽어 표시만 한다.
 
 #### 사용자에게 확인받기
 
@@ -310,7 +310,7 @@ curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
 ```
 
 수정 가능 필드 (부분 수정, 하나 이상 필수):
-`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `drink_from`, `drink_until`, `status`, `note`
+`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `status`, `note`
 
 > `consumed_at`, `consumed_quantity`, `tasting_id`는 수정 API로 변경 불가 — **소비 API 전용**.
 

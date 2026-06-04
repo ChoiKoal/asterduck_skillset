@@ -53,7 +53,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 | peak_year | ❌ | 음용 피크 연도 (예: 2030) |
 | country_id | ✅ | 국가 ID |
 | region_id | ✅ | 지역 ID |
-| appellation_id | ❌ | 아펠라시옹 ID |
+| appellation_id | ⚠️ 강력권장 | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 appellation을 비워두면 안 됨(부르고뉴/지역만 뜨고 세부가 사라짐). 마스터에 정확한 1er Cru/Grand Cru 항목이 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑 |
 
 > **음용 적기(drink window)** — 와인 자체의 일반 권장 음용 시기를 *연도*로 저장한다. 모두 선택값이며 연도(1900~2100) 정수. 알면 채우고, 모르면 생략. 정합성: `drink_from_year ≤ peak_year ≤ drink_until_year` (어긋나면 400). NV/빈티지 미상이면 비워둔다.
 >
