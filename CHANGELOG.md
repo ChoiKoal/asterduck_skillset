@@ -12,6 +12,24 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.5.0] - 2026-06-05
+
+### Added
+
+- **wineduck-wine**: 와인 카탈로그 **음용 적기(연도)** 필드 추가 — `drink_from_year` / `drink_until_year` / `peak_year`
+  - 등록/수정 시 입력, 정합성 `drink_from_year ≤ peak_year ≤ drink_until_year` (연도 1900~2100)
+  - 시음 노트의 `drink_window`(enum: `now`/`within_1_5y`/`over_5y`, 주관적 인상)와 **다른 필드**임을 명시 — 와인 등록엔 연도 필드만 사용
+  - OpenAPI `WineCreateRequest`에 동일 반영
+
+### Changed
+
+- **wineduck-wine**: `appellation_id` **강력권장**으로 가이드 강화 — 와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin 등) region만 채우지 말고 반드시 매핑. 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹으로라도 연결.
+- **wineduck-cellar**: 음용 적기는 **와인 카탈로그 속성**으로 정리 — 셀러 등록/수정에서 `drink_from`/`drink_until`(날짜) 입력 **제거**(폐기). 셀러는 와인의 `drink_*_year`(연도)를 읽어 표시만 함.
+  - `sort=drink_soon` 정렬 기준을 와인 `drink_until_year`(연도)로 변경
+  - `/cellar/expiring`(음용 임박)을 `w.drink_until_year ≤ 올해` 기준으로 변경
+  - 응답 필드: `drink_from`/`drink_until`(날짜) → `drink_from_year`/`drink_until_year`/`peak_year`(연도, 와인 JOIN)
+  - OpenAPI CellarCreate/Update에서 날짜 입력 제거, CellarEntry 응답에 연도 필드 반영
+
 ## [0.4.0] - 2026-04-29
 
 ### Added
