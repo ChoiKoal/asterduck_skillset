@@ -55,7 +55,12 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 | region_id | ✅ | 지역 ID |
 | appellation_id | ❌ | 아펠라시옹 ID |
 
-> **음용 적기(drink window)** — 와인 자체의 일반 권장 음용 시기를 *연도*로 저장한다(셀러의 병 단위 적기와 별개). 모두 선택값이며 연도(1900~2100) 정수. 알면 채우고, 모르면 생략. 정합성: `drink_from_year ≤ peak_year ≤ drink_until_year` (어긋나면 400). NV/빈티지 미상이면 비워둔다.
+> **음용 적기(drink window)** — 와인 자체의 일반 권장 음용 시기를 *연도*로 저장한다. 모두 선택값이며 연도(1900~2100) 정수. 알면 채우고, 모르면 생략. 정합성: `drink_from_year ≤ peak_year ≤ drink_until_year` (어긋나면 400). NV/빈티지 미상이면 비워둔다.
+>
+> ⚠️ **혼동 금지 — 비슷한 이름의 다른 필드 2개가 있다:**
+> - **여기(와인 등록)**: `drink_from_year` / `drink_until_year` / `peak_year` — **연도(절대값)**, 와인 카탈로그의 일반 권장 적기.
+> - **시음 노트 등록 스킬의 `drink_window`**: enum `now` / `within_1_5y` / `over_5y` — 내가 *마셔본* 주관적 인상(상대값). ← 와인 등록엔 쓰지 않는다.
+> 와인을 *등록*할 때는 항상 연도 필드(`drink_*_year`)를 쓰고, enum `drink_window`는 시음 노트에서만 쓴다.
 
 ### Step 3: 등록 API 호출
 
