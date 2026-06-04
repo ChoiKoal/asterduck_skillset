@@ -70,7 +70,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 |----|-----------|-------------|
 | `newest` | 셀러 등록일 최신순 (기본) | 보유 목록 기본 화면 |
 | `oldest` | 셀러 등록일 오래된 순 | 오래 묵은 와인 확인 |
-| `drink_soon` | `drink_until` ASC (음용 적기 임박순) | 빨리 마셔야 하는 와인 정렬 |
+| `drink_soon` | 와인 음용적기 종료연도 `drink_until_year` ASC (음용 적기 임박순) | 빨리 마셔야 하는 와인 정렬 |
 | `purchase_date` | 구매일 최신순 | 최근에 산 와인 확인 |
 | `consumed_recent` | `consumed_at` DESC (최근 마신 순) | `status=consumed` 조회 시 추천 |
 
@@ -90,8 +90,9 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | `currency` | 통화 (`KRW`/`USD`/`EUR`/`JPY` 등) |
 | `storage_location` | 보관 위치 (ex: "셀러 A칸 3번", nullable) |
 | `status` | `in_cellar` / `consumed` / `gifted` / `received` |
-| `drink_from` | 음용 적기 시작일 (YYYY-MM-DD, nullable) |
-| `drink_until` | 음용 적기 마감일 (YYYY-MM-DD, nullable) — `drink_soon` 정렬 기준 |
+| `drink_from_year` | 음용 적기 시작연도 (연도, 와인 카탈로그에서 가져옴, nullable) |
+| `drink_until_year` | 음용 적기 종료연도 (연도, 와인 카탈로그에서 가져옴, nullable) — `drink_soon` 정렬·`/cellar/expiring` 기준 |
+| `peak_year` | 음용 적기 절정연도 (연도, 와인 카탈로그에서 가져옴, nullable) |
 | `consumed_at` | 소비 일시 (consume API 호출 시 자동 기록) |
 | `consumed_quantity` | 소비한 수량 |
 | `tasting_id` | 연결된 테이스팅 노트 ID (nullable) |
@@ -179,7 +180,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 ### 2-1. 음용 적기 임박 와인 (drink-soon 알림용)
 
-`drink_until` 이 이미 지났거나 이번 달 안에 도래하는 보유 와인 목록.
+와인 음용적기 종료연도가 올해 이하인 보유 와인 목록.
 홈 화면 "곧 마셔야 할 와인" 카드에 사용.
 
 ```bash
@@ -192,8 +193,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   "https://coffeeduckbe-production.up.railway.app/api/cellar/expiring?n=50"
 ```
 
-**필터 기준**: `status = 'in_cellar' AND drink_until IS NOT NULL AND drink_until <= LAST_DAY(NOW())`
-**정렬**: `drink_until ASC`
+**필터 기준**: `status='in_cellar' AND w.drink_until_year IS NOT NULL AND w.drink_until_year <= YEAR(CURDATE())` (와인 음용적기 종료연도가 올해 이하인 보유 와인)
+**정렬**: `w.drink_until_year ASC`
 
 **응답:**
 ```json

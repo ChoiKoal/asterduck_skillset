@@ -974,7 +974,7 @@ paths:
             정렬 옵션.
             - `newest` / `oldest`: 등록일 기준
             - `purchase_date`: 구매일 DESC
-            - `drink_soon`: `drink_until` ASC (음용 적기 임박순)
+            - `drink_soon`: `drink_until_year` ASC (와인 음용적기 임박순)
             - `consumed_recent`: `consumed_at` DESC (`status=consumed` 조합 권장)
           schema:
             type: string
@@ -1077,10 +1077,10 @@ paths:
   /cellar/expiring:
     get:
       tags: [WineDuck - Cellar]
-      summary: 음용 적기 임박 와인 (drink_until ≤ 이번 달 말)
+      summary: 음용 적기 임박 와인 (와인 음용적기 종료연도(drink_until_year) ≤ 올해)
       description: |
-        `status = 'in_cellar' AND drink_until IS NOT NULL AND drink_until <= LAST_DAY(NOW())` 조건의 보유 와인.
-        `drink_until ASC` 정렬. 홈 화면 "곧 마셔야 할 와인" 카드용.
+        `status='in_cellar' AND w.drink_until_year IS NOT NULL AND w.drink_until_year <= YEAR(CURDATE())` 조건의 보유 와인.
+        `w.drink_until_year ASC` 정렬. 홈 화면 "곧 마셔야 할 와인" 카드용.
       operationId: listExpiringCellarEntries
       security:
         - bearerAuth: []
@@ -1682,16 +1682,18 @@ components:
         status:
           type: string
           enum: [in_cellar, consumed, gifted, received]
-        drink_from:
-          type: string
-          format: date
+        drink_from_year:
+          type: integer
           nullable: true
-          description: 음용 적기 시작일
-        drink_until:
-          type: string
-          format: date
+          description: 와인 음용적기(연도) — 와인 카탈로그에서 가져옴
+        drink_until_year:
+          type: integer
           nullable: true
-          description: 음용 적기 마감일 — `sort=drink_soon` / `/cellar/expiring` 기준
+          description: 와인 음용적기(연도) — 와인 카탈로그에서 가져옴. `sort=drink_soon` / `/cellar/expiring` 기준
+        peak_year:
+          type: integer
+          nullable: true
+          description: 와인 음용적기(연도) — 와인 카탈로그에서 가져옴
         consumed_at:
           type: string
           format: date-time
@@ -1787,14 +1789,6 @@ components:
           default: KRW
         storage_location:
           type: string
-        drink_from:
-          type: string
-          format: date
-          description: 음용 적기 시작일
-        drink_until:
-          type: string
-          format: date
-          description: 음용 적기 마감일
         note:
           type: string
 
@@ -1817,14 +1811,6 @@ components:
         status:
           type: string
           enum: [in_cellar, consumed, gifted, received]
-        drink_from:
-          type: string
-          format: date
-          nullable: true
-        drink_until:
-          type: string
-          format: date
-          nullable: true
         note:
           type: string
 
