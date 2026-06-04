@@ -53,7 +53,12 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 | producer | ❌ | 생산자 (도멘/네고시앙/와이너리) |
 | vintage_year | ❌ | 빈티지 연도 (NV는 null) |
 | grapes_text | ❌ | 품종 (쉼표 구분) |
+| drink_from_year | ❌ | 음용 적기 시작 연도 (예: 2026) |
+| drink_until_year | ❌ | 음용 적기 종료 연도 (예: 2034) |
+| peak_year | ❌ | 음용 피크 연도 (예: 2030) |
 | country_id | ✅ | 국가 ID |
+
+> ⚠️ 음용 적기 필드 혼동 금지: 와인 등록은 **연도** 필드(`drink_from_year`/`drink_until_year`/`peak_year`, 절대 연도, `from ≤ peak ≤ until`, 1900~2100)를 쓴다. 시음 노트 스킬의 `drink_window`(enum `now`/`within_1_5y`/`over_5y`, 주관적 인상)와는 **다른 필드** — 와인 등록엔 쓰지 않는다.
 | region_id | ✅ | 지역 ID |
 | appellation_id | ❌ | 아펠라시옹 ID |
 
@@ -69,6 +74,9 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
     "producer": "Domaine Geantet-Pansiot",
     "vintage_year": 2023,
     "grapes_text": "Pinot Noir",
+    "drink_from_year": 2026,
+    "drink_until_year": 2034,
+    "peak_year": 2030,
     "country_id": 1,
     "region_id": 5,
     "appellation_id": 9
