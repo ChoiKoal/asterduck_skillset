@@ -12,6 +12,23 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.4.0] - 2026-04-29
+
+### Added
+
+- **wineduck-discovery**: 신규 스킬. 커뮤니티 평균 팔레트 + 사용자 취향 기반 와인 추천
+  - `GET /wineduck/wines/aggregates/palate-avg` — 5축 평균 팔레트 (인증 불필요, FE 레이더 차트 오버레이용)
+  - `GET /wineduck/users/{user_id}/recommendations` — 팔레트 유사도 기반 추천 TOP N (인증 필요, 본인만)
+  - 게이팅(`need_more` / `min_count_required`), 스코어링(팔레트 + 타입/국가/품종 보너스), `reasons` 태그 정책 명시
+- **openapi**: `WineDuck - Discovery` 태그 + 위 두 엔드포인트 스키마 추가
+- **openapi**: 0.3.0에서 cellar SKILL.md에만 반영됐던 변경을 spec에도 동기화
+  - `/cellar` GET status 콤마 다중값 (string + description)
+  - `/cellar` GET sort enum에 `drink_soon`, `consumed_recent` 추가
+  - `CellarEntry` / `CellarCreateRequest` / `CellarUpdateRequest` 에 `drink_from` / `drink_until` 추가
+  - `GET /cellar/expiring` 신규 path
+
+---
+
 ## [0.3.0] - 2026-04-29
 
 ### Added
