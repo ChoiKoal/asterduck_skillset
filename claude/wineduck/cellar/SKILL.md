@@ -1,7 +1,11 @@
-> ## ⚠️ 스킬 버전 확인 — 사용 전 필독
-> **현재 스킬셋 버전: v0.5.1** · 전체 변경 이력: 레포 루트 `CHANGELOG.md` / `VERSION`
-> 이 스킬을 사용하기 전, **네 기존 지식이 최신 모델과 일치하는지 `CHANGELOG.md` 최근 항목을 먼저 확인**하라. 구버전 관성/캐시된 지식으로 동작하지 말 것.
-> **🔴 v0.5.0 호환성 주의**: **음용 적기 = 와인 카탈로그 속성(연도)**. 와인 등록/수정에 `drink_from_year` / `peak_year` / `drink_until_year`(연도, `from ≤ peak ≤ until`) 사용. 셀러 등록 시 `drink_from`/`drink_until`(날짜)는 **폐기**(입력 금지).
+> ## ⚠️ 사용 전 필독 — 반드시 "원격 최신" 버전으로 동작하라
+> 이 사본은 구버전일 수 있다. **파일에 적힌 버전 숫자를 신뢰하지 말고**, 사용 전 원격 main과 직접 대조해 최신을 적용하라:
+> 1. 쓰기 가능한 위치에 최신 사본 확보:
+> `git -C /tmp/asterduck_skillset pull -q 2>/dev/null || git clone -q https://<GITHUB_TOKEN>@github.com/ChoiKoal/asterduck_skillset.git /tmp/asterduck_skillset`
+> 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
+> 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
+> 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
+> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
 
 # WineDuck Cellar — 와인 셀러 관리
 
