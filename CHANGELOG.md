@@ -12,6 +12,20 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.6.0] - 2026-07-06
+
+### Added
+- **WineDuck Conquest 스킬** (`claude/wineduck/conquest`, `codex/wineduck-conquest`) — 정복 도감·빈티지 축·뱃지.
+  - `GET /wineduck/me/conquest` — 전체 정복 요약(국가/지역/아펠라시옹/빈티지 총계 + 지역별 정복률).
+  - `GET /wineduck/me/conquest/region/{id}` (옵션 `?vintage=<year|NV>`) — 지역 도감(아펠라시옹 정복 여부, 빈티지 필터).
+  - `GET /wineduck/me/conquest/appellation/{id}` — 아펠라시옹 빈티지 타임라인.
+  - `GET /wineduck/me/badges` — 뱃지(획득/진행도).
+  - `GET /wineduck/me/vintages`, `GET /wineduck/me/vintages/{year}` — 빈티지 연도별 집계·와인 목록.
+- OpenAPI `WineDuck - Conquest` 태그 + 6 엔드포인트, README(claude/codex) 스킬 목록·설치 갱신.
+
+### Changed
+- WineDuck 빠른 기록(`POST /wineduck/quick-tasting`)이 `vintage_year`(연도, NV 허용) 수신 지원 — 빈티지 정복에 반영.
+
 ## [0.5.2] - 2026-06-10
 
 ### Changed

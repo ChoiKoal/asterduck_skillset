@@ -22,6 +22,7 @@ cp -r asterduck_skillset/codex/wineduck-tasting .agents/skills/
 cp -r asterduck_skillset/codex/wineduck-wine .agents/skills/
 cp -r asterduck_skillset/codex/wineduck-cellar .agents/skills/
 cp -r asterduck_skillset/codex/wineduck-discovery .agents/skills/
+cp -r asterduck_skillset/codex/wineduck-conquest .agents/skills/
 ```
 
 ### 사용자 레벨 (모든 프로젝트에서 사용)
@@ -46,6 +47,7 @@ cp -r asterduck_skillset/codex/auth ~/.agents/skills/asterduck-auth
 | `wineduck-wine` | 와인 등록, 명명 규칙 | 필요 |
 | `wineduck-cellar` | 셀러 목록/통계, 사진으로 추가, 소비 기록 | 필요 |
 | `wineduck-discovery` | 커뮤니티 평균 팔레트, 사용자 취향 기반 추천 | 부분 (추천만 필요) |
+| `wineduck-conquest` | 정복 도감(정복률), 빈티지 축, 뱃지 | 필요 |
 
 ## Claude Code 스킬과의 차이
 
