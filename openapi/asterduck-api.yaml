@@ -39,6 +39,8 @@ tags:
     description: 와인 테이스팅 노트 CRUD
   - name: WineDuck - Wine
     description: 와인 등록
+  - name: WineDuck - Conquest
+    description: 정복 도감(정복률)·빈티지 축·뱃지 (본인 데이터, 인증 필요)
 
 # ──────────────────────────────────────────
 # Auth
@@ -841,6 +843,89 @@ paths:
       responses:
         "200":
           description: 테이스팅 목록
+
+  # ── WineDuck Conquest & Vintage (본인 데이터, 인증 필요) ──
+  /wineduck/me/conquest:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getConquest
+      summary: 전체 정복 요약 (총계 + 지역별 정복률)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 정복 요약. totals(tasted/countries/regions/appellations/vintages) + regions[]{region_id,name,country,appellations_total,appellations_conquered,rate}
+  /wineduck/me/conquest/region/{region_id}:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getConquestRegion
+      summary: 지역 도감 (아펠라시옹 리스트 + 정복 여부, ?vintage 필터)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: region_id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: vintage
+          in: query
+          required: false
+          description: 특정 빈티지(연도) 또는 'NV'(빈티지 미상) 기준으로 정복 필터
+          schema: { type: string }
+      responses:
+        '200':
+          description: region{id,name,country} + my_vintages[] + appellations[]{appellation_id,name,classification,conquered,vintages_count}
+  /wineduck/me/conquest/appellation/{appellation_id}:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getConquestAppellation
+      summary: 아펠라시옹 빈티지 타임라인 (내가 마신 와인들)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: appellation_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: appellation{id,name,region} + vintages[]{vintage,wine_id,tasting_id,rating,wine_name,tasted_at} (vintage null=NV)
+  /wineduck/me/badges:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getBadges
+      summary: 뱃지 (획득/미획득 + 진행도)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: badges[]{code,label,earned,progress?{cur,target}}
+  /wineduck/me/vintages:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getVintages
+      summary: 내가 마신 빈티지 연도별 집계
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: vintages[]{vintage,count} (연도 내림차순, vintage null=NV 마지막)
+  /wineduck/me/vintages/{year}:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getVintageWines
+      summary: 특정 빈티지로 마신 와인 전체 (지역 무관)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          description: 연도(정수) 또는 'NV'
+          schema: { type: string }
+      responses:
+        '200':
+          description: vintage + wines[]{tasting_id,wine_id,wine_name,wine_type,rating,region,appellation,country,tasted_at}
 
 # ──────────────────────────────────────────
 # Components

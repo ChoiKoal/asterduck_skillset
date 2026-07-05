@@ -11,6 +11,7 @@ WineDuck은 와인 덕후를 위한 테이스팅 노트 앱입니다. 이 스킬
 | [search](./search/SKILL.md) | 와인 검색, 지역/아펠라시옹 탐색 | 불필요 |
 | [tasting](./tasting/SKILL.md) | 테이스팅 노트 등록/조회/수정/삭제 | 필요 |
 | [wine](./wine/SKILL.md) | 와인 등록, 중복 검사, 명명 규칙 | 필요 |
+| [conquest](./conquest/SKILL.md) | 정복 도감(국가/지역/아펠라시옹 정복률), 빈티지 축, 뱃지 | 필요 |
 
 > 인증은 공용 스킬 [`auth`](../auth/SKILL.md)를 사용합니다.
 
@@ -27,6 +28,7 @@ cp -r asterduck_skillset/claude/auth ~/.claude/skills/asterduck-auth
 cp -r asterduck_skillset/claude/wineduck/search ~/.claude/skills/wineduck-search
 cp -r asterduck_skillset/claude/wineduck/tasting ~/.claude/skills/wineduck-tasting
 cp -r asterduck_skillset/claude/wineduck/wine ~/.claude/skills/wineduck-wine
+cp -r asterduck_skillset/claude/wineduck/conquest ~/.claude/skills/wineduck-conquest
 ```
 
 ## 사용 예시
