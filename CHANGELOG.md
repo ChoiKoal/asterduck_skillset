@@ -12,6 +12,15 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.6.1] - 2026-07-06
+
+### Changed
+- **아펠라시옹 매핑 지침을 시음/등록 경로 전체에 반영** — 마신 와인 빠른 등록(quick-tasting) 경로로 생성된 와인이 아펠라시옹 미연결로 태어나 정복 도감이 비어 보이던 문제 대응(BE 서버측 자동매칭 추가에 맞춤).
+  - **wineduck-tasting**(claude/codex): "시음 등록 전 와인이 카탈로그에 없어 새로 등록하는 경우" 섹션 추가 — wineduck-wine으로 등록 시 `appellation_id`/`region_id`/`country_id`를 채우도록 명시(정복 도감 집계 기반). `POST /wineduck/quick-tasting` 문서화 — BE가 와인명에서 아펠라시옹을 자동매칭하지만(라틴 아펠라시옹명이 와인명에 그대로 있을 때만), 도멘/퀴베명만 있는 와인은 매칭 불가 → `appellation_id`/`region_id`/`country_id` 명시 권장. 파라미터 계약(일부만 보내도 상위 자동 보강, 무효 시 400) 명시.
+  - **wineduck-wine**(claude/codex): 등록 프로세스에 "Step 2.5: 아펠라시옹 매핑"(마스터 조회 → ID 확인 → 없으면 상위 아펠라시옹) 명시, `appellation_id` 권장도를 "🔴 필수급"으로 격상.
+  - **wineduck-conquest**(claude/codex): "미연결 와인은 도감에 안 뜸 — 등록 시 아펠라시옹 매핑 필수" 주의 1줄 추가.
+- README 버전 배지 0.5.0 → 0.6.1, VERSION 0.6.0 → 0.6.1.
+
 ## [0.6.0] - 2026-07-06
 
 ### Added

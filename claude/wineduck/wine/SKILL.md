@@ -62,7 +62,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 | peak_year | ❌ | 음용 피크 연도 (예: 2030) |
 | country_id | ✅ | 국가 ID |
 | region_id | ✅ | 지역 ID |
-| appellation_id | ⚠️ 강력권장 | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 appellation을 비워두면 안 됨(부르고뉴/지역만 뜨고 세부가 사라짐). 마스터에 정확한 1er Cru/Grand Cru 항목이 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑 |
+| appellation_id | 🔴 필수급(강력권장) | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 appellation을 비워두면 안 됨(부르고뉴/지역만 뜨고 세부가 사라짐). 마스터에 정확한 1er Cru/Grand Cru 항목이 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑. **미연결 와인은 정복 도감에 안 뜬다** (아래 Step 2.5 필수). |
 
 > **음용 적기(drink window)** — 와인 자체의 일반 권장 음용 시기를 *연도*로 저장한다. 모두 선택값이며 연도(1900~2100) 정수. 알면 채우고, 모르면 생략. 정합성: `drink_from_year ≤ peak_year ≤ drink_until_year` (어긋나면 400). NV/빈티지 미상이면 비워둔다.
 >
@@ -70,6 +70,16 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 > - **여기(와인 등록)**: `drink_from_year` / `drink_until_year` / `peak_year` — **연도(절대값)**, 와인 카탈로그의 일반 권장 적기.
 > - **시음 노트 등록 스킬의 `drink_window`**: enum `now` / `within_1_5y` / `over_5y` — 내가 *마셔본* 주관적 인상(상대값). ← 와인 등록엔 쓰지 않는다.
 > 와인을 *등록*할 때는 항상 연도 필드(`drink_*_year`)를 쓰고, enum `drink_window`는 시음 노트에서만 쓴다.
+
+### Step 2.5: 아펠라시옹 매핑 (정복 도감 집계 기반 — 필수)
+
+와인을 정복 도감에 잡히게 하려면 아펠라시옹 연결이 필수다. 등록 전 반드시:
+
+1. **마스터 조회** — 아래 "지역/아펠라시옹 ID 매핑" 절차대로 `countries` → `regions`(+`include_sub`) → `appellations` 순서로 조회
+2. **ID 확인** — 와인명/생산지에 맞는 기존 `appellation_id`(및 `region_id`/`country_id`) 확정 (표기 흔들림 주의, 신규 남발 금지)
+3. **없으면 상위 아펠라시옹으로** — 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 연결. region만 남기고 appellation을 비우지 말 것
+
+> 아펠라시옹 미연결로 등록된 와인은 정복 도감에서 집계되지 않아 도감이 비어 보인다.
 
 ### Step 3: 등록 API 호출
 

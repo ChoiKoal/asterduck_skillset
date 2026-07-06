@@ -131,6 +131,21 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
 }
 ```
 
+### 시음 등록 전 와인이 카탈로그에 없어 새로 등록하는 경우
+
+시음할 와인이 검색에 안 잡히면 **wineduck-wine 스킬로 먼저 등록**하고, 이때 **`appellation_id`/`region_id`/`country_id`를 반드시 채울 것**. 정복 도감(conquest)은 와인의 아펠라시옹 연결을 기준으로 집계하므로, 미연결로 등록하면 도감에 안 뜬다.
+
+#### 마신 와인 빠른 등록 (quick-tasting)
+
+`POST /api/wineduck/quick-tasting`으로 와인 검색·등록·시음을 한 번에 처리할 때, 신규 와인이 생성되면:
+
+- (a) BE가 **와인명에서 아펠라시옹을 자동매칭**한다 — 단 **라틴 아펠라시옹명이 와인명에 그대로 들어있을 때만**(예: `Chablis`, `Gevrey-Chambertin`, `Barolo`).
+- (b) **도멘/퀴베명만 있는 와인은 자동매칭이 안 된다** → `appellation_id`/`region_id`/`country_id` 파라미터를 **명시적으로 함께 보내는 것을 권장**.
+
+파라미터 계약: 셋 중 일부만 보내도 됨 — 아펠라시옹을 주면 지역/국가가 자동 보강되고, 지역을 주면 국가가 자동 보강된다. 유효하지 않은 ID면 400.
+
+ID 매핑 방법(마스터 조회 → ID 확인 → 없으면 상위 아펠라시옹으로)은 **wineduck-wine 스킬**의 "지역/아펠라시옹 ID 매핑" 절차를 따른다.
+
 ### 2. 테이스팅 노트 조회
 
 #### 특정 와인의 테이스팅 목록

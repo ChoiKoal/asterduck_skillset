@@ -69,7 +69,17 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 
 > ⚠️ 음용 적기 필드 혼동 금지: 와인 등록은 **연도** 필드(`drink_from_year`/`drink_until_year`/`peak_year`, 절대 연도, `from ≤ peak ≤ until`, 1900~2100)를 쓴다. 시음 노트 스킬의 `drink_window`(enum `now`/`within_1_5y`/`over_5y`, 주관적 인상)와는 **다른 필드** — 와인 등록엔 쓰지 않는다.
 | region_id | ✅ | 지역 ID |
-| appellation_id | ⚠️ 강력권장 | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 비워두면 부르고뉴/지역만 뜨고 세부가 사라짐. 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑 |
+| appellation_id | 🔴 필수급(강력권장) | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 비워두면 부르고뉴/지역만 뜨고 세부가 사라짐. 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑. **미연결 와인은 정복 도감에 안 뜬다** (아래 Step 2.5 필수). |
+
+### Step 2.5: 아펠라시옹 매핑 (정복 도감 집계 기반 — 필수)
+
+와인을 정복 도감에 잡히게 하려면 아펠라시옹 연결이 필수다. 등록 전 반드시:
+
+1. **마스터 조회** — 아래 "지역/아펠라시옹 ID 매핑" 절차대로 `countries` → `regions`(+`include_sub`) → `appellations` 순서로 조회
+2. **ID 확인** — 와인명/생산지에 맞는 기존 `appellation_id`(및 `region_id`/`country_id`) 확정 (표기 흔들림 주의, 신규 남발 금지)
+3. **없으면 상위 아펠라시옹으로** — 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 연결. region만 남기고 appellation을 비우지 말 것
+
+> 아펠라시옹 미연결로 등록된 와인은 정복 도감에서 집계되지 않아 도감이 비어 보인다.
 
 ### Step 3: 등록 API 호출
 

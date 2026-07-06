@@ -1,6 +1,6 @@
 # Aster.duck AI Skillset
 
-[![version](https://img.shields.io/badge/version-0.5.0-burgundy)](./CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.6.1-burgundy)](./CHANGELOG.md)
 [![release](https://img.shields.io/github/v/release/ChoiKoal/asterduck_skillset?display_name=tag&sort=semver)](https://github.com/ChoiKoal/asterduck_skillset/releases)
 
 [Aster.duck](https://asterduck.koalstudio.com) 플랫폼을 AI 에이전트로 활용하기 위한 스킬 & API 스펙 모음입니다.
