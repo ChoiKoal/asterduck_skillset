@@ -146,6 +146,35 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
 
 ID 매핑 방법(마스터 조회 → ID 확인 → 없으면 상위 아펠라시옹으로)은 **wineduck-wine 스킬**의 "지역/아펠라시옹 ID 매핑" 절차를 따른다.
 
+##### 와인 매칭·빈티지 규칙
+
+`wine_id` 없이 보내면 BE가 **정규화된 `(canonical_name, wine_type, vintage_year)` 3필드로 기존 와인을 매칭**한다:
+
+- **같은 이름이라도 빈티지가 다르면 별도 와인 row** — 샤블리 2021과 2022는 서로 다른 와인으로 생성·집계된다. 정복 도감의 빈티지 축이 이 단위로 쌓이므로, 시음마다 빈티지를 정확히 보낼 것.
+- **NV(논빈티지)**: `vintage_year` 생략 또는 `null` = NV. NV는 NV끼리만 매칭되고, NV ↔ 연도 와인은 별개 row다.
+- ⚠️ **`wine_id`와 함께 쓸 때는 생략과 명시적 `null`이 다르다** — 필드를 **생략**하면 카탈로그 정본을 쓰지만, `vintage_year: null`을 **명시**하면 "NV다"라는 주장으로 취급돼 카탈로그에 연도가 있으면 409가 난다. 정본을 쓰려면 필드 자체를 빼라.
+- **빈티지 검증**: 빈 문자열은 NV로 정규화된다. `0`·`1899` 등 허용 범위(1900~현재+1) 밖 정수는 **400** (DB 접근 전 거부).
+- 같은 이름·같은 빈티지라도 `wine_type`이 다르면 별도 row.
+
+##### wine_id 지정 시 — 카탈로그가 정본 (409 주의)
+
+`wine_id`를 지정하면 name/type/vintage는 **카탈로그 값이 정본**이다. 요청에 함께 실은 `wine_name`/`wine_type`/`vintage_year`가 카탈로그와 다르면 저장되지 않고 409가 반환된다:
+
+```json
+{
+  "success": false,
+  "code": "WINE_ID_FIELD_MISMATCH",
+  "conflict_fields": ["vintage_year"],
+  "canonical_values": { "wine_name": "Chablis ...", "wine_type": "white", "vintage_year": 2021 }
+}
+```
+
+`conflict_fields`는 불일치한 필드만, `canonical_values`는 **카탈로그 정본 3필드 전체**(name/type/vintage)를 담는다.
+
+**대응 규칙:**
+1. `wine_id`를 쓸 때는 name/type/vintage를 **같이 보내지 않는 것**이 가장 안전하다 — `wine_id` 단독 전송이 허용되며 카탈로그 정본이 그대로 쓰인다.
+2. 409를 받으면 `canonical_values`(카탈로그 정본)를 사용자에게 보여주고 확인할 것 — (a) 카탈로그 값대로 기록하려면 `wine_id`만 남기고 재요청, (b) 실제로 다른 빈티지/타입을 마신 거면 `wine_id`를 **빼고** 이름+빈티지로 보내 새 row를 만든다. 확인 없이 임의 재시도 금지.
+
 ### 2. 테이스팅 노트 조회
 
 #### 특정 와인의 테이스팅 목록

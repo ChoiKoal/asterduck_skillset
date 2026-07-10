@@ -1,3 +1,13 @@
+## v0.7.0 (2026-07-10)
+
+### WineDuck — quick-tasting 매칭·빈티지 계약 개편
+
+- **와인 매칭 규칙 신설**: `wine_id` 미지정 시 정규화된 `(canonical_name, wine_type, vintage_year)` 3필드 매칭. 같은 이름의 다른 빈티지/타입은 별도 와인 row로 생성돼 정복 도감 빈티지 축이 기록 단위로 온전히 집계됨.
+- **NV 규칙**: `vintage_year` null/생략 = NV, NV는 NV끼리만 매칭. 빈 문자열은 NV로 정규화, 범위(1900~현재+1) 밖 정수는 400.
+- **wine_id = 카탈로그 정본**: `wine_id` 지정 시 name/type/vintage는 카탈로그 값 사용. 동봉 필드 불일치 시 `409 WINE_ID_FIELD_MISMATCH` + `conflict_fields`/`canonical_values` 반환 — 에이전트 대응 규칙(정본 확인 후 재요청 or wine_id 제거 신규 생성) 문서화.
+- **OpenAPI**: `/wineduck/quick-tasting` POST 신설(400/409 스키마 포함), 커뮤니티 팔레트 `wine_type` enum 5종(red/white/sparkling/rose/white_sparkling) 확장 + 미지원 타입 400 명시.
+- 적용 파일: wineduck tasting/wine/conquest 스킬 (Claude+Codex 전 변형).
+
 # Changelog
 
 Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.

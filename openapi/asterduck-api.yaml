@@ -848,6 +848,65 @@ paths:
         "200":
           description: 테이스팅 목록
 
+  /wineduck/quick-tasting:
+    post:
+      tags: [WineDuck - Tasting]
+      summary: 마신 와인 빠른 등록 (검색·등록·시음 원스텝)
+      description: |
+        와인 특정과 시음 기록을 한 번에 처리한다.
+        - `wine_id` 없이 보내면 정규화된 `(wine_name, wine_type, vintage_year)` 3필드로 기존 와인을 매칭한다.
+          같은 이름이라도 빈티지·타입이 다르면 **별도 와인 row**가 생성된다 (정복 도감 빈티지 축의 집계 단위).
+        - NV(논빈티지)는 `vintage_year` 생략/`null` — NV는 NV끼리만 매칭된다. 빈 문자열은 NV로 정규화.
+        - `vintage_year`가 1900~(현재+1) 범위 밖 정수면 400.
+        - `wine_id` 지정 시 name/type/vintage는 **카탈로그가 정본** — 생략한 필드는 정본으로 채워지고, **명시적으로 동봉한 필드만** 정본과 비교해 다르면 409. (`vintage_year: null` 명시는 NV 주장으로 취급 — 생략과 다름)
+        - 신규 와인 생성 시 와인명에서 아펠라시옹 자동매칭을 시도하며,
+          `appellation_id`/`region_id`/`country_id`를 명시하면 그 값을 우선 사용한다(부분 전달 시 상위 자동 보강).
+      operationId: quickTasting
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: |
+                식별 방법 2택 — `wine_id` 단독 (카탈로그 정본 사용, 권장), 또는 `wine_name`+`wine_type`(+`vintage_year`) 조합.
+                wine_id 미지정 시 wine_name/wine_type 필수. rating은 선택(0.0~5.0).
+              properties:
+                wine_id:      { type: integer, nullable: true, description: 지정 시 카탈로그 정본 사용 — 단독 전송 가능·권장 (name/type/vintage 동봉 비권장) }
+                wine_name:    { type: string }
+                wine_type:    { type: string, enum: [red, white, sparkling, rose, white_sparkling] }
+                vintage_year: { type: integer, nullable: true, description: NV는 null/생략. 1900~현재+1 }
+                rating:       { type: number }
+                one_liner:    { type: string }
+                tasted_at:    { type: string, format: date }
+                appellation_id: { type: integer, nullable: true }
+                region_id:      { type: integer, nullable: true }
+                country_id:     { type: integer, nullable: true }
+      responses:
+        "201":
+          description: 시음 저장 (필요 시 와인 신규 생성 포함)
+        "400":
+          description: 유효하지 않은 입력 (범위 밖 vintage_year, 잘못된 geo ID 등)
+        "409":
+          description: wine_id 카탈로그 정본과 동봉 필드 불일치
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: false }
+                  code:    { type: string, example: WINE_ID_FIELD_MISMATCH }
+                  conflict_fields:
+                    type: array
+                    items: { type: string }
+                    example: [vintage_year]
+                  canonical_values:
+                    type: object
+                    description: 카탈로그 정본 3필드 전체 (wine_name/wine_type/vintage_year)
+                    additionalProperties: true
+
   # ── WineDuck Conquest & Vintage (본인 데이터, 인증 필요) ──
   /wineduck/me/conquest:
     get:
@@ -945,10 +1004,10 @@ paths:
       parameters:
         - name: wine_type
           in: query
-          description: 타입 필터 (없으면 전체 평균)
+          description: 타입 필터 (없으면 전체 평균). 미지원 값은 400.
           schema:
             type: string
-            enum: [red, rose, white_sparkling]
+            enum: [red, white, sparkling, rose, white_sparkling]
       responses:
         "200":
           description: 평균 팔레트 + 표본 수
@@ -969,6 +1028,8 @@ paths:
                       finish:    { type: number, nullable: true }
                   sample_count: { type: integer, description: 집계에 포함된 테이스팅 노트 수 }
                   wine_type:    { type: string, description: 적용된 필터 (`all` if none) }
+        "400":
+          description: 미지원 wine_type (DB 접근 전 거부)
 
   /wineduck/users/{user_id}/recommendations:
     get:

@@ -220,7 +220,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/a
 > "Gevrey-Chambertin Vieilles Vignes 2023 등록해줘. 쟝테팡시오 도멘이야. 피노 누아."
 
 → 처리 순서:
-1. `wines/search?name=Gevrey-Chambertin&vintage=2023` 로 중복 확인
+1. `wines/search?name=Gevrey-Chambertin&vintage=2023` 로 중복 확인 — 카탈로그는 **빈티지별 별도 row**다(같은 이름 2021/2022는 다른 와인). quick-tasting에 `wine_id`를 지정하면 name/type/vintage는 카탈로그가 정본이며 불일치 시 `409 WINE_ID_FIELD_MISMATCH`가 반환된다 (상세는 wineduck-tasting 스킬)
 2. Type A 판단 → canonical_name: "Gevrey-Chambertin Vieilles Vignes"
 3. producer: "Domaine Geantet-Pansiot"
 4. country_id=1(FR), region_id=5(Côte de Nuits), appellation_id=9(Gevrey-Chambertin)
