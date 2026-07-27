@@ -67,9 +67,10 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | 파라미터 | 기본값 | 값 |
 |----------|--------|-----|
 | `status` | `in_cellar` | `in_cellar` / `consumed` / `gifted` / `received` (쉼표 구분 다중값 가능: `in_cellar,received`) |
-| `wine_type` | (전체) | `red` / `rose` / `white_sparkling` |
+| `wine_type` | (전체) | 정식 `red` / `white` / `sparkling` / `rose`, 레거시 `white_sparkling`; 쉼표 다중값 가능 |
 | `sort` | `newest` | `newest` / `oldest` / `drink_soon` / `purchase_date` / `consumed_recent` |
 | `q` | — | 와인명(canonical_name) 또는 생산자(producer) 부분 매칭 |
+| `appellation_id` | — | 선택한 활성 아펠라시옹과 모든 활성 하위 아펠라시옹(재귀) |
 | `page` | 1 | 페이지 번호 |
 | `per_page` | 20 | 최대 100 |
 
@@ -83,7 +84,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | `purchase_date` | 구매일 최신순 | 최근에 산 와인 확인 |
 | `consumed_recent` | `consumed_at` DESC (최근 마신 순) | `status=consumed` 조회 시 추천 |
 
-> ⚠️ **`wine_type` 주의**: 화이트 와인과 스파클링 와인은 같은 카테고리 `white_sparkling`로 묶입니다. `white` 단독 값은 사용할 수 없습니다.
+> `white_sparkling`은 공개 호환성을 위해 유지되는 레거시 값이다. 신규 데이터는 `white`와 `sparkling`을 구분하되 기존 통합값 조회도 계속 지원한다.
 
 #### 응답 구조 (각 entry 객체)
 
@@ -227,7 +228,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 #### Step 1. 사진에서 와인 정보 추출 (에이전트의 비전 능력 사용)
 
-Claude/GPT-4 등 비전 가능한 에이전트는 **직접** 라벨을 읽어 다음 정보를 파싱:
+비전 가능한 에이전트는 **직접** 라벨을 읽어 다음 정보를 파싱:
 
 - 와인 이름
 - 생산자 (있으면)
@@ -236,7 +237,7 @@ Claude/GPT-4 등 비전 가능한 에이전트는 **직접** 라벨을 읽어 �
 - 품종 (표기되어 있으면)
 - 국가 / 지역 / 아펠라시옹
 
-> 비전이 없는 환경에서는 BE의 보조 엔드포인트 `POST /api/wineduck/analyze-label` (body: `{ "images": [base64...] }`)를 호출해 GPT-4o로 파싱 가능.
+> 비전이 없는 환경에서는 공개 보조 엔드포인트 `POST /api/wineduck/analyze-label`을 사용한다. body는 `{ "images": [base64_or_data_url, ...] }`, 1~5장이다. 성공 시 `wine_info`와 사용량을 반환하지만 공급자 생성값을 서버가 엄격히 검증하지 않으므로 등록 전 반드시 사용자 확인과 마스터 지리 매핑을 거친다.
 
 #### Step 2. 중복 확인 — wineduck-search
 
@@ -320,7 +321,7 @@ curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
 ```
 
 수정 가능 필드 (부분 수정, 하나 이상 필수):
-`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `status`, `note`
+`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `status`, `note` (레거시 호환으로 `drink_from`/`drink_until`도 수신하지만 신규 흐름에서는 사용 금지)
 
 > `consumed_at`, `consumed_quantity`, `tasting_id`는 수정 API로 변경 불가 — **소비 API 전용**.
 

@@ -22,6 +22,22 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.6.2] - 2026-07-28
+
+### Fixed
+- WineDuck `/wines`에서 지원하지 않는 지리 필터를 제거하고 직접 탐색을 `/wines/by-region`으로 교정.
+- Claude/Codex 검색·발견·와인·셀러 문서를 현재 WineDuck 및 Wine Vision 백엔드 계약과 동기화.
+- 추천 최소 시음 3개, 실제 점수 요인, 재시음 후보 정책과 `/me/palate/insight`를 명시.
+- README 설치·인벤토리(라우팅 manifest)에 실제 discovery/conquest 스킬을 일관되게 노출.
+
+### Added
+- search 내부 아펠라시옹 발견 워크플로(별도 standalone skill 추가 없음).
+- OpenAPI 지리 탐색, 팔레트 인사이트 및 cellar 아펠라시옹 필터 계약.
+- 정복 보드를 Claude/Codex 공개 워크플로에 노출하고 deprecated map 호환 경로를 구분.
+
+### Compatibility
+- 기존 스킬 이름과 레거시 `white_sparkling`, 정복 map 경로는 유지.
+
 ## [0.6.1] - 2026-07-06
 
 ### Changed

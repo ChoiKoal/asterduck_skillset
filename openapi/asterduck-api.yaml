@@ -13,7 +13,7 @@ info:
 
     ## 다국어
     - `Accept-Language` 헤더로 응답 언어 변경: `ko`, `ja`, `en`
-  version: 1.0.0
+  version: 0.6.2
   contact:
     name: Aster.duck
     url: https://asterduck.koalstudio.com
@@ -668,24 +668,26 @@ paths:
       tags: [WineDuck - Search]
       summary: 와인 목록 (필터링)
       operationId: listWines
+      description: |
+        일반 카탈로그 목록. 지리 ID 필터는 지원하지 않는다.
+        국가/지역/아펠라시옹 탐색은 `/wineduck/wines/by-region`을 사용한다.
       parameters:
-        - name: country_id
+        - name: user_id
           in: query
+          description: 해당 사용자가 등록한 와인만 조회
           schema:
             type: integer
-        - name: region_id
+        - name: search
           in: query
-          schema:
-            type: integer
-        - name: appellation_id
-          in: query
-          schema:
-            type: integer
-        - name: wine_type
-          in: query
+          description: 와인명, 생산자, 품종 부분 검색
           schema:
             type: string
-            enum: [red, rose, white_sparkling]
+        - name: wine_type
+          in: query
+          description: 콤마 구분 다중값 지원. 정식 값과 레거시 white_sparkling 호환.
+          schema:
+            type: string
+            example: red,rose
         - name: page
           in: query
           schema:
@@ -726,6 +728,30 @@ paths:
                     type: string
                   wine_id:
                     type: integer
+
+  /wineduck/wines/by-region:
+    get:
+      tags: [WineDuck - Search]
+      summary: 국가·지역·아펠라시옹별 와인 탐색
+      description: |
+        지리 ID 기반 전용 탐색. appellation_id > region_id > country_id 우선순위로
+        가장 높은 한 필터만 적용한다. region_id는 선택 지역과 바로 아래 하위 지역을 포함한다.
+      operationId: listWinesByRegion
+      parameters:
+        - { name: country_id, in: query, schema: { type: integer } }
+        - { name: region_id, in: query, schema: { type: integer } }
+        - { name: appellation_id, in: query, schema: { type: integer } }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+      responses:
+        "200":
+          description: 지리 범위 와인 목록과 페이지네이션
+        "400":
+          description: 유효하지 않은 페이지네이션
 
   # ──────────────────────────────────────────
   # WineDuck - Tasting
@@ -1031,14 +1057,31 @@ paths:
         "400":
           description: 미지원 wine_type (DB 접근 전 거부)
 
+  /wineduck/me/palate/insight:
+    get:
+      tags: [WineDuck - Discovery]
+      summary: 내 팔레트 활성화 인사이트
+      description: |
+        시음 수에 따라 S0(0), S1(1~2), S2(3~5), S3(6+) 상태와
+        아펠라시옹 취향 후보 및 다음 CTA를 반환한다. 본인 토큰 기준이며 캐시하지 않는다.
+      operationId: getMyPalateInsight
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: state, candidates, next_cta 및 상태별 clue/taste_tendency
+        "401":
+          description: 인증 필요
+
   /wineduck/users/{user_id}/recommendations:
     get:
       tags: [WineDuck - Discovery]
       summary: 사용자 취향 기반 와인 추천 TOP N
       description: |
-        팔레트 유사도(주 신호) + 선호 타입/국가/품종 보너스로 점수화된 추천.
+        팔레트 유사도·커뮤니티 표본/평점·음용 적기와 선호 타입/국가/품종으로 점수화한다.
         본인만 조회 가능 (path `user_id` 와 토큰 user_id 일치 검증).
-        테이스팅 노트가 `min_count_required`(기본 3) 미만이면 `need_more: true` + `wines: []` 반환.
+        테이스팅 노트 총 3개 미만이면 `need_more: true` + `wines: []` 반환.
+        이미 시음한 와인을 일괄 제외하지 않으며, 사용자 최고 평점이 2점 이하인 와인만 제외한다.
       operationId: getUserRecommendations
       security:
         - bearerAuth: []
@@ -1111,9 +1154,10 @@ paths:
             example: in_cellar,received
         - name: wine_type
           in: query
+          description: 정식 타입 또는 레거시 white_sparkling. 쉼표 다중값 지원.
           schema:
             type: string
-            enum: [red, rose, white_sparkling]
+            example: red,white
         - name: sort
           in: query
           description: |
@@ -1131,6 +1175,12 @@ paths:
           description: canonical_name 또는 producer 부분 매칭
           schema:
             type: string
+        - name: appellation_id
+          in: query
+          description: 선택한 활성 아펠라시옹과 모든 활성 하위 아펠라시옹(재귀)으로 필터
+          schema:
+            type: integer
+            minimum: 1
         - name: page
           in: query
           schema:

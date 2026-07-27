@@ -109,6 +109,22 @@ curl -s ".../api/wineduck/me/vintages/2017" -H "Authorization: Bearer $TOKEN"
                "tasted_at": "2026-07-03T20:15:00" } ] }
 ```
 
+### 7. 정복 보드 — 현재 전체 카탈로그
+
+신규 클라이언트의 정식 전체 정복 화면이다. 좌표 없이 국가 → 지역 → 아펠라시옹 계층, 직접/롤업 정복, 셀러 병수, 빈티지, 즐겨찾기를 제공한다.
+
+```bash
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/me/conquest/board?vintage=2018" \
+  -H "Authorization: Bearer $TOKEN"
+# vintage=NV 또는 생략 가능
+```
+
+- `self_conquered`: 해당 아펠라시옹 직접 시음 여부; `conquered`: 하위 정복까지 롤업
+- `cellar_bottles`: 활성·보유중인 잔여 병수(`quantity - consumed_quantity`, 0 미만 제외). 셀러 보유만으로 정복되지는 않음
+- `vintages`: 중복 제거, 빈티지 미상은 문자열 `NV`
+- 스키마 준비 전에는 503과 `WINEDUCK_BOARD_SCHEMA_NOT_READY` 반환
+- `GET /me/conquest/map`은 공개 호환성을 위해 유지되는 deprecated 좌표 기반 경로이며 신규 흐름은 board 사용
+
 ## 사용 예시 (자연어)
 > "나 부르고뉴 얼마나 정복했어?" · "피에몬테 아직 안 마신 곳?" · "2017년산 마신 와인?" · "내 뱃지?"
 

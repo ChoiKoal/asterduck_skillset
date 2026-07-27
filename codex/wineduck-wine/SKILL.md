@@ -58,18 +58,18 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 | 필드 | 필수 | 설명 |
 |------|------|------|
 | canonical_name | ✅ | 와인 이름 (아래 명명 규칙 참조) |
-| wine_type | ✅ | red / rose / white_sparkling |
+| wine_type | ❌ | `red` / `white` / `sparkling` / `rose` (레거시 `white_sparkling` 호환) |
 | producer | ❌ | 생산자 (도멘/네고시앙/와이너리) |
 | vintage_year | ❌ | 빈티지 연도 (NV는 null) |
 | grapes_text | ❌ | 품종 (쉼표 구분) |
 | drink_from_year | ❌ | 음용 적기 시작 연도 (예: 2026) |
 | drink_until_year | ❌ | 음용 적기 종료 연도 (예: 2034) |
 | peak_year | ❌ | 음용 피크 연도 (예: 2030) |
-| country_id | ✅ | 국가 ID |
+| country_id 또는 country_iso_code | ❌ | 기존 국가 ID 또는 ISO 코드(예: `FR`) |
 
 > ⚠️ 음용 적기 필드 혼동 금지: 와인 등록은 **연도** 필드(`drink_from_year`/`drink_until_year`/`peak_year`, 절대 연도, `from ≤ peak ≤ until`, 1900~2100)를 쓴다. 시음 노트 스킬의 `drink_window`(enum `now`/`within_1_5y`/`over_5y`, 주관적 인상)와는 **다른 필드** — 와인 등록엔 쓰지 않는다.
-| region_id | ✅ | 지역 ID |
-| appellation_id | 🔴 필수급(강력권장) | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 비워두면 부르고뉴/지역만 뜨고 세부가 사라짐. 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑. **미연결 와인은 정복 도감에 안 뜬다** (아래 Step 2.5 필수). |
+| region_id 또는 region_name | ❌ | 기존 지역 ID 또는 정확한 마스터 이름 |
+| appellation_id 또는 appellation_name | 🔴 필수급(강력권장) | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 비워두면 부르고뉴/지역만 뜨고 세부가 사라짐. 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑. **미연결 와인은 정복 도감에 안 뜬다** (아래 Step 2.5 필수). |
 
 ### Step 2.5: 아펠라시옹 매핑 (정복 도감 집계 기반 — 필수)
 
@@ -80,6 +80,8 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 3. **없으면 상위 아펠라시옹으로** — 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 연결. region만 남기고 appellation을 비우지 말 것
 
 > 아펠라시옹 미연결로 등록된 와인은 정복 도감에서 집계되지 않아 도감이 비어 보인다.
+
+> 백엔드 필수값은 `canonical_name` 하나다. 다만 검색·정복·탐색 품질을 위해 타입과 지리 연결을 가능한 한 채운다. 이름/ID 방식 모두 지원하지만 마스터에 없는 지리는 400이며 이 API가 새 국가·지역·아펠라시옹을 만들지 않는다.
 
 ### Step 3: 등록 API 호출
 
@@ -102,12 +104,16 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
   }'
 ```
 
-**응답:**
+**응답 (HTTP 201):**
 ```json
 {
   "success": true,
   "message": "와인이 등록되었습니다.",
-  "wine_id": 42
+  "wine_id": 42,
+  "resolved": {
+    "country_id": 1, "region_id": 5, "appellation_id": 9,
+    "country_code": "FR", "region": "Côte de Nuits"
+  }
 }
 ```
 
@@ -212,7 +218,9 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/a
 |----|------|
 | `red` | 레드 와인 |
 | `rose` | 로제 와인 |
-| `white_sparkling` | 화이트 와인, 스파클링 와인 (⚠️ "white" 단독 사용 불가!) |
+| `white` | 화이트 와인 |
+| `sparkling` | 스파클링 와인 |
+| `white_sparkling` | 레거시 통합값(하위 호환 전용) |
 ## 대화형 등록 예시
 
 사용자가 자연어로 와인 등록을 요청하면:
@@ -231,4 +239,4 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/a
 - **중복 확인 없이 등록하지 말 것** — 같은 와인이 여러 개 생기면 데이터 오염
 - **기존 region/appellation ID 우선** — 검색 결과를 충분히 확인한 뒤에야 신규 추가. 표기 흔들림으로 신규 ID를 만들면 운영자가 사후에 정리해야 함
 - producer + 아펠라시옹 + 빈티지가 같으면 이름이 약간 달라도 동일 와인으로 판단
-- country_id, region_id는 필수 — 없으면 탐색 페이지에서 검색 불가
+- 지리 필드는 API 필수는 아니지만 누락 시 지리 탐색·정복 품질이 떨어진다. 가능한 경우 country/region/appellation을 함께 연결

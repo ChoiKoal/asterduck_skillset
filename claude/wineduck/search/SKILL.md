@@ -78,9 +78,9 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries"
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries/1/regions"
 ```
 
-### 5. 아펠라시옹 목록 조회
+### 5. 아펠라시옹 발견 워크플로
 
-특정 지역의 아펠라시옹(원산지 명칭) 목록.
+아펠라시옹 발견은 별도 스킬이 아니라 이 검색 스킬 안에서 수행한다. 국가 → 지역 → 아펠라시옹 순으로 기존 마스터를 좁히고, 해당 산지의 와인은 `/wines/by-region`으로 조회한다. 특정 지역의 아펠라시옹(원산지 명칭) 목록:
 
 ```bash
 # 코트 드 뉘(region_id=5)의 아펠라시옹
@@ -98,20 +98,21 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/a
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/42"
 ```
 
-### 7. 와인 목록 (필터링)
+### 7. 일반 와인 목록과 지리 탐색
 
-국가, 지역, 아펠라시옹, 타입별 와인 목록.
+`GET /wines`는 `user_id`, `search`, `wine_type`(콤마 다중값), `page`, `per_page`만 지원한다. **`country_id`, `region_id`, `appellation_id`는 이 경로에서 무시되므로 보내지 않는다.**
 
 ```bash
-# 프랑스 레드와인
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines?country_id=1&wine_type=red"
+# 일반 텍스트/타입 검색
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines?search=Pinot&wine_type=red&page=1&per_page=20"
 
-# 특정 아펠라시옹의 와인
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines?appellation_id=9"
-
-# 페이지네이션
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines?page=1&per_page=20"
+# 국가·지역·아펠라시옹 직접 탐색은 전용 경로 사용
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?country_id=1&page=1&per_page=20"
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?region_id=4&page=1&per_page=20"
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?appellation_id=9&page=1&per_page=20"
 ```
+
+`/wines/by-region`은 `appellation_id` → `region_id` → `country_id` 우선순위로 하나의 지리 범위를 적용한다. `region_id`는 해당 지역과 바로 아래 하위 지역까지 포함한다. `wine_type`/텍스트 검색을 함께 적용해야 하면 먼저 지리 결과를 받은 뒤 클라이언트에서 좁히거나 별도 이름 검색을 조합한다.
 
 ## 탐색 계층 구조
 
@@ -138,7 +139,7 @@ WineDuck의 지역 탐색은 최대 4단계 계층:
 
 사용자가 자연어로 와인을 찾으면 적절한 API를 조합해서 검색:
 
-- "부르고뉴 피노 누아 추천해줘" → 국가=FR, 지역=Burgundy 필터 + 와인 목록 조회
+- "부르고뉴 피노 누아 추천해줘" → 국가/지역 ID 확인 후 `/wines/by-region?region_id=...` 조회
 - "바롤로 2019년산 있어?" → name=Barolo&vintage=2019 검색
 - "프랑스에 어떤 지역이 있어?" → countries/1/regions 조회
 - "코트 드 뉘에 어떤 아펠라시옹이 있어?" → regions/5/appellations 조회
