@@ -1,13 +1,3 @@
-## v0.7.0 (2026-07-10)
-
-### WineDuck — quick-tasting 매칭·빈티지 계약 개편
-
-- **와인 매칭 규칙 신설**: `wine_id` 미지정 시 정규화된 `(canonical_name, wine_type, vintage_year)` 3필드 매칭. 같은 이름의 다른 빈티지/타입은 별도 와인 row로 생성돼 정복 도감 빈티지 축이 기록 단위로 온전히 집계됨.
-- **NV 규칙**: `vintage_year` null/생략 = NV, NV는 NV끼리만 매칭. 빈 문자열은 NV로 정규화, 범위(1900~현재+1) 밖 정수는 400.
-- **wine_id = 카탈로그 정본**: `wine_id` 지정 시 name/type/vintage는 카탈로그 값 사용. 동봉 필드 불일치 시 `409 WINE_ID_FIELD_MISMATCH` + `conflict_fields`/`canonical_values` 반환 — 에이전트 대응 규칙(정본 확인 후 재요청 or wine_id 제거 신규 생성) 문서화.
-- **OpenAPI**: `/wineduck/quick-tasting` POST 신설(400/409 스키마 포함), 커뮤니티 팔레트 `wine_type` enum 5종(red/white/sparkling/rose/white_sparkling) 확장 + 미지원 타입 400 명시.
-- 적용 파일: wineduck tasting/wine/conquest 스킬 (Claude+Codex 전 변형).
-
 # Changelog
 
 Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
@@ -24,14 +14,18 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ## [0.7.0] - 2026-07-28
 
+### Added
+- **WineDuck quick-tasting 매칭·빈티지 계약 개편**: `wine_id` 미지정 시 정규화된 `(canonical_name, wine_type, vintage_year)` 3필드로 매칭한다. 같은 이름의 다른 빈티지·타입은 별도 와인 row로 생성되어 정복 도감 빈티지 축이 기록 단위로 집계된다.
+- **NV 규칙**: `vintage_year` null 또는 생략은 NV이고 NV끼리만 매칭한다. 빈 문자열은 NV로 정규화하며, 범위(1900~현재+1) 밖 정수는 400이다.
+- **wine_id 카탈로그 정본**: `wine_id` 지정 시 name/type/vintage는 카탈로그 값이 정본이다. 동봉 필드가 불일치하면 `409 WINE_ID_FIELD_MISMATCH`와 `conflict_fields`/`canonical_values`를 반환한다. 에이전트는 정본 확인 후 재요청하거나 `wine_id`를 제거해 신규 생성한다.
+- `/wineduck/quick-tasting` POST와 400/409 응답 스키마, 커뮤니티 팔레트의 5종 `wine_type` enum(red/white/sparkling/rose/white_sparkling) 및 미지원 타입 400 계약을 OpenAPI에 추가했다.
+- OpenAPI에 팔레트 인사이트, 추천, 지역별 와인 목록, 정복 보드/레거시 map, 라벨 분석의 요청·응답·인증·상태/캐시 계약을 추가했다.
+
 ### Fixed
 - WineDuck 공개 계약을 실제 라우트에 맞춰 정렬: 정식 wine type은 `red`/`white`/`sparkling`/`rose`, `white_sparkling`은 레거시 호환값이다. 단 내 테이스팅 목록의 `wine_type` 필터는 정식 4개만 받는다.
 - 와인·테이스팅 생성의 201 응답, 필수 필드, 테이스팅 수정 가능 필드 및 내 테이스팅 offset 페이지네이션을 OpenAPI에 구체화했다.
 - 셀러의 병 단위 날짜 `drink_from`/`drink_until`은 POST·PUT에서 계속 지원함을 문서와 스키마에 복원했다.
 - 정복 요약 지역 순서를 정복률이 아닌 내 시음 노트 수와 최근성 기준으로 정정하고, 단일 지역 질문은 `/me/conquest/region/{region_id}`로 안내했다.
-
-### Added
-- OpenAPI에 팔레트 인사이트, 추천, 지역별 와인 목록, 정복 보드/레거시 map, 라벨 분석의 요청·응답·인증·상태/캐시 계약을 추가했다.
 
 ### Compatibility / limitations
 - 라벨 분석은 공개 보조 경로이며 모델 생성 `wine_info`는 서버 검증을 거치지 않는다. 현재 Vision 출력은 legacy `white_sparkling`을 낼 수 있어 사용자 확인·중복 검색·마스터 지리 매핑 후에만 쓰기 요청한다.
