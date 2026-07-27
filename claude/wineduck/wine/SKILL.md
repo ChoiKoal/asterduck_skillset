@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 # WineDuck Wine — 와인 등록 & 관리
 

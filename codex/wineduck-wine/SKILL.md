@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 ---
 name: wineduck-wine
@@ -66,10 +66,15 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 | drink_until_year | ❌ | 음용 적기 종료 연도 (예: 2034) |
 | peak_year | ❌ | 음용 피크 연도 (예: 2030) |
 | country_id 또는 country_iso_code | ❌ | 기존 국가 ID 또는 ISO 코드(예: `FR`) |
-
-> ⚠️ 음용 적기 필드 혼동 금지: 와인 등록은 **연도** 필드(`drink_from_year`/`drink_until_year`/`peak_year`, 절대 연도, `from ≤ peak ≤ until`, 1900~2100)를 쓴다. 시음 노트 스킬의 `drink_window`(enum `now`/`within_1_5y`/`over_5y`, 주관적 인상)와는 **다른 필드** — 와인 등록엔 쓰지 않는다.
 | region_id 또는 region_name | ❌ | 기존 지역 ID 또는 정확한 마스터 이름 |
-| appellation_id 또는 appellation_name | 🔴 필수급(강력권장) | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 비워두면 부르고뉴/지역만 뜨고 세부가 사라짐. 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑. **미연결 와인은 정복 도감에 안 뜬다** (아래 Step 2.5 필수). |
+| appellation_id 또는 appellation_name | 🔴 필수급(강력권장) | 아펠라시옹 ID — **와인명에 아펠라시옹이 드러나면(Chablis, Marsannay, Gevrey-Chambertin, Barolo 등) 반드시 채울 것.** region만 채우고 appellation을 비워두면 안 됨(부르고뉴/지역만 뜨고 세부가 사라짐). 마스터에 정확한 1er Cru/Grand Cru 항목이 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 매핑. **미연결 와인은 정복 도감에 안 뜬다** (아래 Step 2.5 필수). |
+
+> **음용 적기(drink window)** — 와인 자체의 일반 권장 음용 시기를 *연도*로 저장한다. 모두 선택값이며 연도(1900~2100) 정수. 알면 채우고, 모르면 생략. 정합성: `drink_from_year ≤ peak_year ≤ drink_until_year` (어긋나면 400). NV/빈티지 미상이면 비워둔다.
+>
+> ⚠️ **혼동 금지 — 비슷한 이름의 다른 필드 2개가 있다:**
+> - **여기(와인 등록)**: `drink_from_year` / `drink_until_year` / `peak_year` — **연도(절대값)**, 와인 카탈로그의 일반 권장 적기.
+> - **시음 노트 등록 스킬의 `drink_window`**: enum `now` / `within_1_5y` / `over_5y` — 내가 *마셔본* 주관적 인상(상대값). ← 와인 등록엔 쓰지 않는다.
+> 와인을 *등록*할 때는 항상 연도 필드(`drink_*_year`)를 쓰고, enum `drink_window`는 시음 노트에서만 쓴다.
 
 ### Step 2.5: 아펠라시옹 매핑 (정복 도감 집계 기반 — 필수)
 

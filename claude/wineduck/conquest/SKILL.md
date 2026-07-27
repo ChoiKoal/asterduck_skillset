@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 
 # WineDuck Conquest — 정복 도감 & 빈티지
@@ -42,7 +42,7 @@ Country(국가) → Region(지역) → Appellation(아펠라시옹) → Vintage(
 
 ### 1. 전체 정복 요약
 
-내 정복 총계 + 마신 지역별 정복률(rate 내림차순).
+내 정복 총계 + 마신 지역별 정복률. 지역 정렬은 정복률이 아니라 내 시음 노트 수 내림차순, 동률이면 최근 시음 순이다.
 
 ```bash
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/me/conquest" \
@@ -187,7 +187,8 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/me/conquest
 
 ## 사용 예시 (자연어)
 
-> "나 부르고뉴 얼마나 정복했어?" → `/me/conquest/board`에서 부르고뉴 계층·정복 상태 확인
+> "나 부르고뉴 얼마나 정복했어?" → 해당 지역 ID로 `/me/conquest/region/{region_id}`에서 단일 지역 도감·정복 상태 확인
+> 전체 화면/전체 카탈로그가 필요할 때만 `/me/conquest/board` 사용
 > "피에몬테에서 아직 안 마신 아펠라시옹 뭐야?" → `/me/conquest/region/17`에서 `conquered:false`
 > "2017년산으로 마신 와인 보여줘" → `/me/vintages/2017`
 > "내 뱃지 뭐 땄어?" → `/me/badges`

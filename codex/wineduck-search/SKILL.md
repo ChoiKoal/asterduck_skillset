@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 ---
 name: wineduck-search
@@ -117,7 +117,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-re
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?appellation_id=9&page=1&per_page=20"
 ```
 
-`/wines/by-region`은 `appellation_id` → `region_id` → `country_id` 우선순위로 하나의 지리 범위를 적용한다. `region_id`는 해당 지역과 바로 아래 하위 지역까지 포함한다. `wine_type`/텍스트 검색을 함께 적용해야 하면 먼저 지리 결과를 받은 뒤 클라이언트에서 좁히거나 별도 이름 검색을 조합한다.
+`/wines/by-region`은 `appellation_id` → `region_id` → `country_id` 우선순위로 하나의 지리 범위를 적용한다. `region_id`는 해당 지역과 바로 아래 하위 지역까지 포함한다. 이 경로는 `page`/`per_page`만 지원하며 `wine_type`·텍스트 결합 필터는 지원하지 않는다. 결과 전체에 대한 결합 검색이 필요하면 백엔드 지원이 추가될 때까지 별도 요청으로 처리한다.
 
 ## 탐색 계층 구조
 
@@ -155,5 +155,7 @@ WineDuck의 지역 탐색은 최대 4단계 계층:
 |----|------|
 | red | 레드 와인 |
 | rose | 로제 와인 |
-| white_sparkling | 화이트 / 스파클링 와인 |
+| white | 화이트 스틸 와인 |
+| sparkling | 스파클링 와인 |
+| white_sparkling | 레거시 통합값(호환 전용) |
 

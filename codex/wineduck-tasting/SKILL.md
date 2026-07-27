@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 ---
 name: wineduck-tasting
@@ -189,40 +189,10 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/tastings/{t
 
 #### 내 테이스팅 목록 (인증 필요)
 ```bash
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/users/{user_id}/tastings?limit=200" \
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/users/{user_id}/tastings?limit=10&offset=0&wine_type=white&sort=newest" \
   -H "Authorization: Bearer $TOKEN"
 ```
-
-응답은 취향 분석에 활용할 수 있도록 팔레이트 / 국가 / 품종 필드를 함께 내려줌:
-
-```json
-{
-  "success": true,
-  "tastings": [
-    {
-      "id": 15,
-      "wine_id": 3,
-      "wine_name": "Château Margaux",
-      "wine_type": "red",
-      "rating": 4.0,
-      "one_liner": "...",
-      "tasted_at": "2026-04-13",
-      "created_at": "2026-04-13T19:30:00",
-      "sweetness": 1,
-      "acidity": 4,
-      "body": 4,
-      "tannin": 3,
-      "finish": 4,
-      "repurchase": true,
-      "country_id": 1,
-      "country_iso_code": "FR",
-      "country_name_ko": "프랑스",
-      "country_name": "France",
-      "grapes_text": "Cabernet Sauvignon, Merlot"
-    }
-  ]
-}
-```
+`limit`은 기본 10, 1~200이고 `offset`은 0 이상이다. `wine_type` 필터는 정식값 `red`/`white`/`sparkling`/`rose`만 받으며, `white`·`sparkling` 필터는 저장된 레거시 `white_sparkling`도 함께 반환한다. `sort`는 `newest`/`oldest`/`rating_high`; 응답은 `tastings`, `total`, `overall_total`, `limit`, `offset`, `has_more`다.
 
 ### 3. 테이스팅 노트 수정 (인증 필요, 본인만)
 
@@ -240,72 +210,11 @@ curl -s -X DELETE "https://coffeeduckbe-production.up.railway.app/api/wineduck/t
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### 5. 취향 집계 & 커뮤니티 평균 (Phase 2 신설)
-
-`/wineduck/tasted/taste` 차트 페이지를 프로그래매틱하게 재현하거나, 취향 분석 리포트를 생성할 때 사용.
-
-#### 사용자 취향 통계
-```bash
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/users/{user_id}/stats" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-응답(발췌):
-```json
-{
-  "success": true,
-  "total_count": 24,
-  "avg_rating": 3.9,
-  "repurchase_rate": 67,
-  "type_breakdown": [
-    {"wine_type": "red", "count": 14},
-    {"wine_type": "white_sparkling", "count": 8},
-    {"wine_type": "rose", "count": 2}
-  ]
-}
-```
-
-#### 사용자 선호 요약
-```bash
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/users/{user_id}/preferences" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-응답은 `favorite_type`, `favorite_country`, `favorite_grapes` 등.
-
-#### 커뮤니티 팔레이트 평균 (인증 불필요)
-```bash
-# 전체 유저 평균
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/aggregates/palate-avg"
-
-# 와인 타입으로 필터
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/aggregates/palate-avg?wine_type=red"
-```
-
-응답:
-```json
-{
-  "success": true,
-  "wine_type": "red",
-  "sample_count": 312,
-  "avg_palate": {
-    "sweetness": 1.8,
-    "acidity": 3.7,
-    "body": 3.9,
-    "tannin": 3.4,
-    "finish": 3.5
-  }
-}
-```
-
-- **3건 이상 시 차트 활성화**: FE에서는 사용자 테이스팅이 3건 이상일 때만 팔레이트 레이더·추천을 노출 (`INSIGHT_MIN_COUNT=3`). 스킬에서도 같은 기준으로 분석 리포트 여부를 결정하면 일관성 있음.
-- **팔레이트 레이더**: 내 평균 vs 커뮤니티 평균 5축 비교가 기본. 커뮤니티는 **전체 유저 평균**(`wine_type` 필터 없음)을 먼저 보여주는 것을 권장 — 초기에는 타입 필터 없는 큰 표본이 기준선으로 더 유용함.
-
 ## 필드 레퍼런스
 
 | 필드 | API key | 범위 | 필수 |
 |------|---------|------|------|
-| 와인 타입 | wine_type | red / rose / white_sparkling | ✅ |
+| 와인 타입 | wine_type | red / white / sparkling / rose (레거시 white_sparkling 호환) | ✅ |
 | 시음 날짜 | tasted_at | YYYY-MM-DD (기본: 오늘) | ❌ |
 | 당도 | sweetness | 1-5 | ❌ |
 | 산도 | acidity | 1-5 | ❌ |
@@ -322,7 +231,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/aggre
 | 통화 | currency_code | KRW / USD / EUR (기본: KRW) | ❌ |
 | 향 | aromas | 배열 | ❌ |
 
-> ⚠️ **`wine_type` 주의**: 화이트 와인과 스파클링 와인은 같은 카테고리 `white_sparkling`로 묶입니다. `white` 단독 값은 사용할 수 없습니다.
+> **`wine_type`**: 신규 기록에는 정식값 `red`/`white`/`sparkling`/`rose`를 사용한다. 기존 `white_sparkling`은 레거시 데이터·호환 요청으로 계속 허용된다.
 
 ## 향 (Aromas) 등록 형식
 

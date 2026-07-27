@@ -1,6 +1,6 @@
 # Aster.duck AI Skillset
 
-[![version](https://img.shields.io/badge/version-0.6.2-burgundy)](./CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.7.0-burgundy)](./CHANGELOG.md)
 [![release](https://img.shields.io/github/v/release/ChoiKoal/asterduck_skillset?display_name=tag&sort=semver)](https://github.com/ChoiKoal/asterduck_skillset/releases)
 
 [Aster.duck](https://asterduck.koalstudio.com) 플랫폼을 AI 에이전트로 활용하기 위한 스킬 & API 스펙 모음입니다.
@@ -199,7 +199,7 @@ asterduck_skillset/
 - **인증**: JWT Bearer Token (24시간 유효)
 - **응답 형식**: JSON
 - **다국어**: `Accept-Language` 헤더 지원 (ko, ja, en)
-- **총 엔드포인트**: 38개
+- **OpenAPI inventory**: 54 operations / 43 paths
 - **OpenAPI Spec**: [openapi/asterduck-api.yaml](./openapi/asterduck-api.yaml)
 
 ### 인증 플로우 (Minimal)

@@ -22,6 +22,21 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.7.0] - 2026-07-28
+
+### Fixed
+- WineDuck 공개 계약을 실제 라우트에 맞춰 정렬: 정식 wine type은 `red`/`white`/`sparkling`/`rose`, `white_sparkling`은 레거시 호환값이다. 단 내 테이스팅 목록의 `wine_type` 필터는 정식 4개만 받는다.
+- 와인·테이스팅 생성의 201 응답, 필수 필드, 테이스팅 수정 가능 필드 및 내 테이스팅 offset 페이지네이션을 OpenAPI에 구체화했다.
+- 셀러의 병 단위 날짜 `drink_from`/`drink_until`은 POST·PUT에서 계속 지원함을 문서와 스키마에 복원했다.
+- 정복 요약 지역 순서를 정복률이 아닌 내 시음 노트 수와 최근성 기준으로 정정하고, 단일 지역 질문은 `/me/conquest/region/{region_id}`로 안내했다.
+
+### Added
+- OpenAPI에 팔레트 인사이트, 추천, 지역별 와인 목록, 정복 보드/레거시 map, 라벨 분석의 요청·응답·인증·상태/캐시 계약을 추가했다.
+
+### Compatibility / limitations
+- 라벨 분석은 공개 보조 경로이며 모델 생성 `wine_info`는 서버 검증을 거치지 않는다. 현재 Vision 출력은 legacy `white_sparkling`을 낼 수 있어 사용자 확인·중복 검색·마스터 지리 매핑 후에만 쓰기 요청한다.
+- `/wines/by-region`은 지리 범위와 페이지네이션만 지원하며 텍스트·wine type 결합 필터는 지원하지 않는다. 추천/팔레트의 내부 숫자 가중치와 임계값은 공개 계약이 아니다.
+
 ## [0.6.2] - 2026-07-28
 
 ### Fixed

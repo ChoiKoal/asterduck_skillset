@@ -13,12 +13,13 @@ info:
 
     ## 다국어
     - `Accept-Language` 헤더로 응답 언어 변경: `ko`, `ja`, `en`
-  version: 0.6.2
+  version: 0.7.0
   contact:
     name: Aster.duck
     url: https://asterduck.koalstudio.com
   license:
     name: MIT
+    identifier: MIT
 
 servers:
   - url: https://coffeeduckbe-production.up.railway.app/api
@@ -715,19 +716,18 @@ paths:
             schema:
               $ref: "#/components/schemas/WineCreateRequest"
       responses:
-        "200":
-          description: 등록 성공
+        "201":
+          description: 등록 성공. 요청에서 이름/ID로 해결된 지리 값도 반환한다.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  wine_id:
-                    type: integer
+                $ref: "#/components/schemas/WineCreateResponse"
+        "400":
+          description: canonical_name 누락, wine_type/음용적기/마스터 지리 값이 유효하지 않음
+        "401":
+          description: 인증 필요
+        "500":
+          description: 서버 오류
 
   /wineduck/wines/by-region:
     get:
@@ -750,8 +750,14 @@ paths:
       responses:
         "200":
           description: 지리 범위 와인 목록과 페이지네이션
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WineByRegionResponse"
         "400":
-          description: 유효하지 않은 페이지네이션
+          description: 유효하지 않은 페이지네이션. wine_type 및 텍스트 결합 필터는 이 경로에서 지원하지 않음.
+        "500":
+          description: 서버 오류
 
   # ──────────────────────────────────────────
   # WineDuck - Tasting
@@ -776,19 +782,20 @@ paths:
             schema:
               $ref: "#/components/schemas/WineTastingCreateRequest"
       responses:
-        "200":
+        "201":
           description: 등록 성공
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  tasting_id:
-                    type: integer
+                $ref: "#/components/schemas/WineTastingCreateResponse"
+        "400":
+          description: wine_type 누락·유효하지 않은 입력
+        "401":
+          description: 인증 필요
+        "404":
+          description: 와인을 찾을 수 없음
+        "500":
+          description: 서버 오류
 
     get:
       tags: [WineDuck - Tasting]
@@ -868,11 +875,31 @@ paths:
         - name: user_id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10, minimum: 1, maximum: 200 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0, minimum: 0 }
+        - name: wine_type
+          in: query
+          description: 필터에는 정식 타입만 허용. white/sparkling은 저장된 legacy white_sparkling도 포함한다.
+          schema: { type: string, enum: [red, white, sparkling, rose] }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [newest, oldest, rating_high], default: newest }
       responses:
         "200":
-          description: 테이스팅 목록
+          description: 본인 테이스팅 목록과 offset 페이지네이션
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserWineTastingsResponse"
+        "400": { description: "잘못된 limit, offset, wine_type 또는 sort" }
+        "401": { description: 인증 필요 }
+        "403": { description: 본인의 목록만 조회 가능 }
+        "500": { description: 서버 오류 }
 
   /wineduck/quick-tasting:
     post:
@@ -964,6 +991,47 @@ paths:
       responses:
         '200':
           description: region{id,name,country} + my_vintages[] + appellations[]{appellation_id,name,classification,conquered,vintages_count}
+  /wineduck/me/conquest/board:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getConquestBoard
+      summary: 전체 정복 카탈로그 보드
+      description: "전체 화면/전체 카탈로그용 정식 경로. 사용자별 응답이며 Cache-Control: no-store."
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: vintage
+          in: query
+          description: 연도 또는 NV. 생략하면 전체 빈티지.
+          schema: { type: string }
+      responses:
+        '200':
+          description: 국가→지역→아펠라시옹 계층의 전체 보드
+          headers:
+            Cache-Control: { schema: { type: string }, example: "no-store, must-revalidate" }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConquestBoardResponse' }
+        '400': { description: vintage는 정수 또는 NV여야 함 }
+        '401': { description: 인증 필요 }
+        '503':
+          description: 계층 스키마 준비 중
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConquestBoardSchemaNotReadyResponse' }
+        '500': { description: 서버 오류 }
+  /wineduck/me/conquest/map:
+    get:
+      tags: [WineDuck - Conquest]
+      operationId: getConquestMapDeprecated
+      summary: Deprecated coordinate conquest map
+      deprecated: true
+      description: 호환성 전용 좌표 기반 map. 신규 전체 카탈로그는 `/me/conquest/board`를 사용한다.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: 레거시 map 응답 }
+        '401': { description: 인증 필요 }
+        '503': { description: 좌표 스키마 준비 중 }
+
   /wineduck/me/conquest/appellation/{appellation_id}:
     get:
       tags: [WineDuck - Conquest]
@@ -1069,9 +1137,14 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          description: state, candidates, next_cta 및 상태별 clue/taste_tendency
-        "401":
-          description: 인증 필요
+          description: "state, candidates, next_cta 및 상태별 clue/taste_tendency. Cache-Control: no-store, must-revalidate."
+          headers:
+            Cache-Control: { schema: { type: string }, example: "no-store, must-revalidate" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PalateInsightResponse" }
+        "401": { description: 인증 필요 }
+        "500": { description: 서버 오류 }
 
   /wineduck/users/{user_id}/recommendations:
     get:
@@ -1101,39 +1174,42 @@ paths:
             maximum: 20
       responses:
         "200":
-          description: 추천 결과 (게이팅 미달 시 빈 배열 + need_more=true)
+          description: "추천 결과 (게이팅 미달 시 빈 배열 + need_more=true). Cache-Control: no-store."
+          headers:
+            Cache-Control: { schema: { type: string }, example: "no-store, must-revalidate" }
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean }
-                  wines:
-                    type: array
-                    description: 점수 DESC 정렬된 추천 리스트
-                    items:
-                      type: object
-                      properties:
-                        wine:
-                          type: object
-                          description: WineListItem 호환 페이로드 (id, canonical_name, producer, wine_type, vintage_year, country/region/appellation, community_palate 등)
-                        score:              { type: number, description: 종합 점수 }
-                        palate_similarity:  { type: number, description: 0~1 정규화 유사도 }
-                        reasons:
-                          type: array
-                          description: i18n 적용된 매치 사유 태그 (`#비슷한 팔레트`, `#레드`, `#프랑스`, `#Nebbiolo` 등)
-                          items: { type: string }
-                  need_more:           { type: boolean, description: 게이팅 미달 시 true }
-                  min_count_required:  { type: integer, description: 최소 테이스팅 수 (기본 3) }
-                  user_tasting_count:  { type: integer }
-                  user_palate_count:   { type: integer, description: 평점 4점 이상 와인 수 (팔레트 학습 시그널) }
-                  candidate_pool_size: { type: integer, description: 스코어링에 들어간 후보 와인 수 }
-        "403":
-          description: 본인이 아닌 다른 user_id 조회 시도
+              schema: { $ref: "#/components/schemas/WineRecommendationsResponse" }
+        "401": { description: 인증 필요 }
+        "403": { description: 본인이 아닌 다른 user_id 조회 시도 }
+        "500": { description: 서버 오류 }
 
 # ──────────────────────────────────────────
 # WineDuck - Cellar
 # ──────────────────────────────────────────
+  /wineduck/analyze-label:
+    post:
+      tags: [WineDuck - Wine]
+      operationId: analyzeWineLabel
+      summary: 와인 라벨 이미지 분석
+      description: |
+        공개 보조 분석 경로. 1~5개의 base64 또는 data URL 이미지를 받는다.
+        `wine_info`는 모델 생성 출력이며 서버가 wine type·지리·이름을 검증하지 않는다. 현재 출력은 legacy `white_sparkling`을 낼 수 있으므로, 쓰기 전 사용자 확인·중복 검색·마스터 지리 매핑이 필요하다.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WineLabelAnalysisRequest' }
+      responses:
+        '200':
+          description: 분석 후보와 사용량
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WineLabelAnalysisResponse' }
+        '400': { description: 이미지가 없거나 5장을 초과함 }
+        '500': { description: 분석 제공자/결과 파싱 오류 }
+
   /cellar:
     get:
       tags: [WineDuck - Cellar]
@@ -1673,6 +1749,135 @@ components:
           items:
             type: integer
 
+    WineType:
+      type: string
+      description: 정식 타입은 red/white/sparkling/rose. white_sparkling은 저장된 기존 데이터 및 요청 하위 호환값.
+      enum: [red, white, sparkling, rose, white_sparkling]
+    WineAromaInput:
+      type: object
+      properties:
+        source: { type: string, enum: [custom, taxonomy] }
+        custom_label: { type: string, maxLength: 255 }
+        node_id: { type: integer }
+    WineTastingCreateResponse:
+      type: object
+      required: [success, tasting_id]
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        tasting_id: { type: integer }
+    WineCreateResponse:
+      type: object
+      required: [success, wine_id, resolved]
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        wine_id: { type: integer }
+        resolved:
+          type: object
+          properties:
+            country_id: { type: [integer, 'null'] }
+            region_id: { type: [integer, 'null'] }
+            appellation_id: { type: [integer, 'null'] }
+            country_code: { type: [string, 'null'] }
+            region: { type: [string, 'null'] }
+    WineByRegionResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        wines: { type: array, items: { $ref: '#/components/schemas/WineSearchResult' } }
+        pagination: { $ref: '#/components/schemas/CellarPagination' }
+    UserWineTastingsResponse:
+      type: object
+      required: [success, tastings, total, overall_total, limit, offset, has_more]
+      properties:
+        success: { type: boolean }
+        tastings: { type: array, items: { type: object, additionalProperties: true } }
+        total: { type: integer }
+        overall_total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+        has_more: { type: boolean }
+    PalateInsightResponse:
+      type: object
+      required: [state, candidates, next_cta]
+      properties:
+        state: { type: string, enum: [S0, S1, S2, S3] }
+        clue: { type: object, additionalProperties: true }
+        candidates: { type: array, items: { type: object, additionalProperties: true } }
+        taste_tendency: { type: string }
+        next_cta: { type: object, additionalProperties: true }
+    WineRecommendationsResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        wines:
+          type: array
+          items:
+            type: object
+            properties:
+              wine: { type: object, additionalProperties: true }
+              score: { type: number, description: 사용자 내 상대 정렬값 }
+              palate_similarity: { type: number, minimum: 0, maximum: 1 }
+              reasons: { type: array, items: { type: string } }
+        need_more: { type: boolean }
+        min_count_required: { type: integer }
+        user_tasting_count: { type: integer }
+        user_total_count: { type: integer }
+        user_palate_count: { type: integer }
+        candidate_pool_size: { type: integer }
+    WineLabelAnalysisRequest:
+      type: object
+      required: [images]
+      properties:
+        images:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { type: string, description: base64 또는 data URL 이미지 }
+    WineLabelAnalysisResponse:
+      type: object
+      required: [success, wine_info, usage]
+      properties:
+        success: { type: boolean }
+        wine_info: { type: object, additionalProperties: true, description: 검증되지 않은 모델 생성 후보 }
+        usage:
+          type: object
+          properties:
+            prompt_tokens: { type: integer }
+            completion_tokens: { type: integer }
+            total_tokens: { type: integer }
+    ConquestBoardAppellation:
+      type: object
+      properties:
+        id: { type: integer }
+        name_ko: { type: [string, 'null'] }
+        name_en: { type: [string, 'null'] }
+        name_ja: { type: [string, 'null'] }
+        self_conquered: { type: boolean }
+        conquered: { type: boolean, description: 하위 아펠라시옹 정복까지 롤업 }
+        cellar_bottles: { type: integer }
+        my_notes: { type: integer }
+        vintages: { type: array, items: { oneOf: [{ type: integer }, { type: string, enum: [NV] }] } }
+        favorite: { type: boolean }
+        children: { type: array, items: { $ref: '#/components/schemas/ConquestBoardAppellation' } }
+    ConquestBoardResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        totals:
+          type: object
+          properties:
+            conquered: { type: integer }
+            appellations_total: { type: integer }
+        countries: { type: array, items: { type: object, additionalProperties: true } }
+    ConquestBoardSchemaNotReadyResponse:
+      type: object
+      properties:
+        success: { type: boolean, enum: [false] }
+        error: { type: string }
+        code: { type: string, enum: [WINEDUCK_BOARD_SCHEMA_NOT_READY] }
+
     WineSearchResult:
       type: object
       properties:
@@ -1684,7 +1889,7 @@ components:
           type: string
         wine_type:
           type: string
-          enum: [red, rose, white_sparkling]
+          enum: [red, white, sparkling, rose, white_sparkling]
         vintage_year:
           type: integer
           nullable: true
@@ -1693,7 +1898,7 @@ components:
 
     WineCreateRequest:
       type: object
-      required: [canonical_name, wine_type, country_id, region_id]
+      required: [canonical_name]
       properties:
         canonical_name:
           type: string
@@ -1704,8 +1909,8 @@ components:
             - Type C (브랜드): 브랜드명. (예: Opus One)
         wine_type:
           type: string
-          enum: [red, rose, white_sparkling]
-          description: "⚠️ white 단독 사용 불가, white_sparkling 사용"
+          enum: [red, white, sparkling, rose, white_sparkling]
+          description: 정식 red/white/sparkling/rose. white_sparkling은 레거시 호환값.
         producer:
           type: string
           description: 생산자 (도멘/네고시앙/와이너리)
@@ -1740,10 +1945,11 @@ components:
 
     WineTastingCreateRequest:
       type: object
+      required: [wine_type]
       properties:
         wine_type:
           type: string
-          enum: [red, rose, white_sparkling]
+          enum: [red, white, sparkling, rose, white_sparkling]
           description: 와인 타입 (필수)
         tasted_at:
           type: string
@@ -1821,33 +2027,27 @@ components:
 
     WineTastingUpdateRequest:
       type: object
+      description: 본인 기록의 부분 수정. aromas를 보내면 기존 향을 교체한다.
       properties:
-        sweetness:
-          type: integer
-        acidity:
-          type: integer
-        body:
-          type: integer
-        tannin:
-          type: integer
-        finish:
-          type: integer
-        aroma_intensity:
-          type: integer
-        rating:
-          type: number
-        one_liner:
-          type: string
-        repurchase:
-          type: boolean
-        pairing_food:
-          type: string
-        color:
-          type: string
+        tasted_at: { type: string, format: date-time }
+        price_amount: { type: number }
+        currency_code: { type: string }
+        pairing_food: { type: string }
+        wine_type: { $ref: "#/components/schemas/WineType" }
+        color: { type: string }
+        aroma_intensity: { type: integer, minimum: 1, maximum: 6 }
+        sweetness: { type: integer, minimum: 1, maximum: 5 }
+        acidity: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: integer, minimum: 1, maximum: 5 }
+        tannin: { type: integer, minimum: 1, maximum: 5 }
+        finish: { type: integer, minimum: 1, maximum: 5 }
+        drink_window: { type: string, enum: [now, within_1_5y, over_5y] }
+        repurchase: { type: boolean }
+        rating: { type: number, minimum: 0, maximum: 5 }
+        one_liner: { type: string }
         aromas:
           type: array
-          items:
-            type: object
+          items: { $ref: "#/components/schemas/WineAromaInput" }
 
     CellarEntry:
       type: object
@@ -1890,6 +2090,16 @@ components:
           type: integer
           nullable: true
           description: 와인 음용적기(연도) — 와인 카탈로그에서 가져옴
+        drink_from:
+          type: string
+          format: date
+          nullable: true
+          description: 셀러 엔트리 병 단위 음용 시작일
+        drink_until:
+          type: string
+          format: date
+          nullable: true
+          description: 셀러 엔트리 병 단위 음용 종료일
         consumed_at:
           type: string
           format: date-time
@@ -1918,7 +2128,7 @@ components:
           nullable: true
         wine_type:
           type: string
-          enum: [red, rose, white_sparkling]
+          enum: [red, white, sparkling, rose, white_sparkling]
         vintage_year:
           type: integer
           nullable: true
@@ -1985,6 +2195,14 @@ components:
           default: KRW
         storage_location:
           type: string
+        drink_from:
+          type: string
+          format: date
+          description: 셀러 엔트리 병 단위 음용 시작일
+        drink_until:
+          type: string
+          format: date
+          description: 셀러 엔트리 병 단위 음용 종료일
         note:
           type: string
 
@@ -2004,6 +2222,12 @@ components:
           type: string
         storage_location:
           type: string
+        drink_from:
+          type: string
+          format: date
+        drink_until:
+          type: string
+          format: date
         status:
           type: string
           enum: [in_cellar, consumed, gifted, received]

@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 # WineDuck Cellar — 와인 셀러 관리
 
@@ -112,7 +112,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 |------|------|
 | `canonical_name` | 와인 정식 이름 (ex: "Gevrey-Chambertin Vieilles Vignes") |
 | `producer` | 생산자/도멘 (ex: "Domaine Geantet-Pansiot") |
-| `wine_type` | `red` / `rose` / `white_sparkling` |
+| `wine_type` | `red` / `white` / `sparkling` / `rose` (레거시 `white_sparkling` 호환) |
 | `vintage_year` | 빈티지 연도 (NV는 null) |
 | `grapes_text` | 품종 (쉼표 구분 텍스트) |
 
@@ -228,7 +228,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 - 와인 이름
 - 생산자 (있으면)
 - 빈티지 연도 (있으면, NV면 null)
-- 와인 타입 (red / rose / white_sparkling — 라벨 또는 병 색상으로 추론)
+- 와인 타입 (red / white / sparkling / rose (레거시 white_sparkling 호환) — 라벨 또는 병 색상으로 추론)
 - 품종 (표기되어 있으면)
 - 국가 / 지역 / 아펠라시옹
 
@@ -292,7 +292,7 @@ HTTP 201 반환.
 | `storage_location` | ❌ | 자유 텍스트 |
 | `note` | ❌ | 메모 |
 
-> ⚠️ **음용 적기는 셀러가 아니라 와인 카탈로그 속성**이다. 셀러 등록 시 `drink_from`/`drink_until`(날짜)는 **입력하지 않는다**(폐기). 음용 적기는 와인 등록 스킬에서 `drink_from_year`/`drink_until_year`/`peak_year`(연도)로 설정하고, 셀러는 그 와인 값을 읽어 표시만 한다.
+> **음용 적기 필드**: 셀러 `POST`와 `PUT`은 병 단위 날짜 `drink_from`/`drink_until`(YYYY-MM-DD)을 계속 지원한다. 별도로 와인 카탈로그의 `drink_from_year`/`drink_until_year`/`peak_year`는 일반 권장 연도이며, `drink_soon`·`/cellar/expiring`은 이 연도 필드를 사용한다.
 
 #### 사용자에게 확인받기
 
@@ -316,7 +316,7 @@ curl -s -X PUT "https://coffeeduckbe-production.up.railway.app/api/cellar/23" \
 ```
 
 수정 가능 필드 (부분 수정, 하나 이상 필수):
-`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `status`, `note` (레거시 호환으로 `drink_from`/`drink_until`도 수신하지만 신규 흐름에서는 사용 금지)
+`quantity`, `purchase_date`, `purchase_price`, `currency`, `storage_location`, `drink_from`, `drink_until`, `status`, `note`
 
 > `consumed_at`, `consumed_quantity`, `tasting_id`는 수정 API로 변경 불가 — **소비 API 전용**.
 

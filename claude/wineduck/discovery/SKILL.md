@@ -5,7 +5,7 @@
 > 2. 배포 사본과 원격 버전 대조: `cat VERSION`(배포) vs `cat /tmp/asterduck_skillset/VERSION`(원격 최신)
 > 3. **다르면 = 배포본 구버전** → `/tmp/asterduck_skillset/`의 SKILL.md·CHANGELOG·OpenAPI를 **우선**해 동작. (상세: `AGENT_UPDATE.md`)
 > 구버전 관성/캐시 지식 금지. `<GITHUB_TOKEN>`은 그룹 CLAUDE.md 또는 배포 사본 git remote에 있음.
-> **🔴 호환성(전체는 CHANGELOG)**: 음용적기 = 와인 카탈로그 연도속성 `drink_from_year`/`peak_year`/`drink_until_year`. 셀러 등록 시 날짜(`drink_from`/`drink_until`) **폐기**.
+> **🔴 호환성(전체는 CHANGELOG)**: 와인 카탈로그의 연도 음용적기(`drink_*_year`)와 셀러 엔트리의 날짜(`drink_from`/`drink_until`)는 모두 현행 API에서 지원된다.
 
 # WineDuck Discovery — 커뮤니티 집계 & 취향 추천
 
@@ -38,7 +38,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   "https://coffeeduckbe-production.up.railway.app/api/wineduck/me/palate/insight"
 ```
 
-시음 수에 따라 `S0`(0), `S1`(1~2), `S2`(3~5), `S3`(6+) 상태를 반환한다. S1은 최고 평점 기록의 단서를, S2/S3은 상위 3개 아펠라시옹 취향 후보를 제공한다. 후보는 최소 2개의 서로 다른 와인이 필요하며 긍정 평가, 평균 평점, 팔레트 완성도/유사도, 90일 반감기 최신성을 조합한다. `next_cta`는 quick tasting, 유사 탐색, 또는 conquest board로 연결된다. 응답은 사용자 전용이며 `Cache-Control: no-store`다.
+응답은 시음 이력에서 산출한 상태(`S0`~`S3`), 상태별 단서 또는 아펠라시옹 후보, 다음 행동(`next_cta`)을 제공한다. 후보와 CTA는 시음 수·평점·팔레트 입력의 충실도·최근성·지역 분포에 따라 달라질 수 있다. 사용자 전용 응답이며 `Cache-Control: no-store`다.
 
 ## 3. 사용자 취향 기반 추천
 
@@ -52,19 +52,9 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 - `user_palate_count`: 평점 4점 이상인 시음 수
 - 다른 사용자 ID는 403
 
-### 현재 추천 정책
+### 추천 계약
 
-선호 팔레트·타입·국가·품종은 우선 평점 4점 이상 기록으로 학습하고, 긍정 표본이 없으면 타입/국가/품종만 전체 시음으로 fallback한다.
-
-후보는 커뮤니티 시음이 1개 이상인 최대 250개다. 커뮤니티 시음 2개 이상이면서 평균 2.5 미만인 와인과, 사용자가 해당 와인에 준 최고 평점이 2점 이하인 와인은 제외한다. **이미 마신 와인이 보편적으로 제외되는 것은 아니다** — 2점 초과로 평가한 기존 와인은 다시 추천될 수 있다.
-
-실제 점수 요인:
-- 측정 가능한 5축의 RMS 거리와 차원 커버리지로 계산한 팔레트 유사도; 사용자 팔레트가 있으면 유사도 0.18 미만 제외
-- 커뮤니티 표본 신뢰도(`min(1, tasting_count/4)`)를 반영한 유사도 항
-- 커뮤니티 평점 품질의 작은 보정
-- 현재 연도가 음용 적기 안이면 `+0.05`
-- 선호 타입 `+0.10`, 상위 국가 `+0.12`, 품종 토큰 겹침 `+0.20`
-- 생산자당 우선 2개 제한(결과가 부족하면 단계적으로 완화)
+추천은 사용자의 시음 이력과 팔레트, 선호 타입·국가·품종, 커뮤니티 표본·평점, 음용 적기 및 다양성을 반영해 정렬한다. 데이터가 부족하면 `need_more`와 빈 `wines`를 반환할 수 있으며, 이미 시음한 항목이 무조건 제외되지는 않는다. 점수 가중치·후보 수·임계값은 공개 API 계약이 아니며 변경될 수 있다.
 
 `wines[].score`는 사용자 내부 정렬용 상대값이고, `palate_similarity`는 0~1, `reasons`는 지역화된 표시용 사유다. 추천 응답도 `Cache-Control: no-store`다.
 
