@@ -13,7 +13,7 @@ info:
 
     ## 다국어
     - `Accept-Language` 헤더로 응답 언어 변경: `ko`, `ja`, `en`
-  version: 0.7.0
+  version: 0.7.1
   contact:
     name: Aster.duck
     url: https://asterduck.koalstudio.com
@@ -648,6 +648,36 @@ paths:
       responses:
         "200":
           description: 아펠라시옹 목록
+
+  /wineduck/appellations/search:
+    get:
+      tags: [WineDuck - Search]
+      summary: 아펠라시옹 이름 검색 (와인 등록 정본 resolve)
+      description: |
+        와인 등록 시 `appellation_id`를 확정하기 위한 **정본 레지스트리 resolve 단계**다.
+        질의어(`q`)를 아펠라시옹 마스터에서 검색해 상위 10건을 반환한다. 인증 불필요(공개).
+        정렬은 결정적(deterministic)이며 prefix 매칭이 먼저 온다.
+        와인 등록 워크플로: 여기서 후보를 찾고 라벨의 name/region/country와 대조해 `id`를
+        확정한 뒤 `POST /wineduck/wines`의 `appellation_id`로 넘긴다. 확신이 없으면 넘기지 않는다.
+      operationId: searchAppellations
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: 검색어. 공백/빈 문자열 또는 허용 길이 초과 시 400.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      responses:
+        "200":
+          description: 매칭된 아펠라시옹 상위 10건(prefix 우선, 결정적 순서)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppellationSearchResponse"
+        "400":
+          description: q가 비었거나(빈/공백) 허용 길이를 초과함
 
   /wineduck/wines/{wine_id}:
     get:
@@ -1787,6 +1817,27 @@ components:
         success: { type: boolean }
         wines: { type: array, items: { $ref: '#/components/schemas/WineSearchResult' } }
         pagination: { $ref: '#/components/schemas/CellarPagination' }
+    AppellationSearchResponse:
+      type: object
+      required: [success, items]
+      description: |
+        와인 등록의 정본 아펠라시옹 resolve 결과. items는 최대 10건이며 prefix 매칭이
+        먼저 오는 결정적 순서다.
+      properties:
+        success: { type: boolean }
+        items:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id: { type: integer, description: appellation_id — POST /wineduck/wines에 그대로 넘긴다 }
+              name: { type: string, description: 아펠라시옹 정식명 (라틴/영문) }
+              name_ko: { type: string, nullable: true, description: 한글 표기(있을 때) }
+              region: { type: string, nullable: true, description: 상위 지역명 }
+              country: { type: string, nullable: true, description: 국가명 }
+              classification: { type: string, nullable: true, description: 등급/분류(있을 때) }
     UserWineTastingsResponse:
       type: object
       required: [success, tastings, total, overall_total, limit, offset, has_more]

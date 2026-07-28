@@ -12,6 +12,17 @@ Aster.duck AI Skillset의 모든 주요 변경 사항을 기록합니다.
 
 ---
 
+## [0.7.1] - 2026-07-28
+
+### Added
+- **아펠라시옹 정본 검색 엔드포인트** — `GET /wineduck/appellations/search?q=<이름>`(공개, 인증 불필요). 아펠라시옹 마스터에서 질의어를 검색해 상위 10건을 prefix 우선 결정적 순서로 반환한다(`{success, items:[{id, name, name_ko, region, country, classification}]}`). `q`는 필수이며 빈/공백 또는 허용 길이(100자) 초과 시 400. OpenAPI에 `searchAppellations` 오퍼레이션과 `AppellationSearchResponse` 스키마 추가.
+- **와인 등록 워크플로에 아펠라시옹 resolve 단계 명시** — wineduck-wine(claude/codex)의 Step 2.5·ID 매핑·대화형 예시를 개편: ① `/appellations/search`로 정본 resolve → ② 후보의 name/region/country를 라벨과 대조해 확정 → ③ `POST /wines`에 `appellation_id` 포함 → ④ 미확정/모호/불일치면 `appellation_id`를 **아예 생략**. **추측 금지 — 매핑이 없는 것이 틀린 매핑보다 낫다**(도감 오염 방지)를 문서에 명시.
+- wineduck-search(claude/codex) 아펠라시옹 발견 워크플로에 `/appellations/search`를 통합(중복 스킬 없이 기존 섹션에 편입).
+
+### Changed
+- wineduck-tasting(claude/codex)의 v0.6.1 아펠라시옹 매핑 참조를 새 resolve 단계(`/appellations/search`로 먼저 `appellation_id` 확정, 모호하면 생략)로 갱신. Claude/Codex 본문 패리티 유지.
+- README·openapi/README의 오퍼레이션/경로 카운트를 실측값(56 operations / 45 paths)으로 정정하고 태그별 표를 실제 값에 맞춤. README 버전 배지 0.7.0 → 0.7.1, VERSION·OpenAPI info.version 0.7.1.
+
 ## [0.7.0] - 2026-07-28
 
 ### Added

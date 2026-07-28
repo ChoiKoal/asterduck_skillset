@@ -51,13 +51,13 @@ docker run -p 8080:8080 -e SWAGGER_JSON=/api/asterduck-api.yaml -v $(pwd):/api s
 | CoffeeDuck Search | 7 | 불필요 |
 | CoffeeDuck Tasting | 7 | 필요 |
 | CoffeeDuck Coffee | 1 | 필요 |
-| WineDuck Search | 8 | 불필요 |
-| WineDuck Tasting | 6 | 필요 |
-| WineDuck Wine | 1 | 필요 |
+| WineDuck Search | 9 | 불필요 |
+| WineDuck Tasting | 7 | 필요 |
+| WineDuck Wine | 2 | 필요 |
 | WineDuck Discovery | 3 | 일부 |
-| WineDuck Conquest | 6 | 필요 |
+| WineDuck Conquest | 8 | 필요 |
 | WineDuck Cellar | 8 | 필요 |
-| **합계** | **54 operations / 43 paths** | |
+| **합계** | **56 operations / 45 paths** | |
 
 ## CoffeeDuck vs WineDuck 차이점
 

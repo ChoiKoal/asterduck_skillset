@@ -80,11 +80,36 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/searc
 
 와인을 정복 도감에 잡히게 하려면 아펠라시옹 연결이 필수다. 등록 전 반드시:
 
-1. **마스터 조회** — 아래 "지역/아펠라시옹 ID 매핑" 절차대로 `countries` → `regions`(+`include_sub`) → `appellations` 순서로 조회
-2. **ID 확인** — 와인명/생산지에 맞는 기존 `appellation_id`(및 `region_id`/`country_id`) 확정 (표기 흔들림 주의, 신규 남발 금지)
-3. **없으면 상위 아펠라시옹으로** — 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 연결. region만 남기고 appellation을 비우지 말 것
+1. **정본 resolve** — `GET /wineduck/appellations/search?q=<아펠라시옹명>`으로 아펠라시옹 마스터를 검색한다(인증 불필요, 상위 10건, prefix 우선 결정적 순서). 이 검색이 **와인 등록의 정본 아펠라시옹 resolve 단계**다. 필요하면 아래 "지역/아펠라시옹 ID 매핑"의 `countries` → `regions`(+`include_sub`) → `appellations` 계층 조회로 보강할 수 있다.
+2. **후보 확정** — 반환된 후보의 `name`/`region`/`country`가 **라벨(생산지)과 일치하는지 대조**해 `id`(=`appellation_id`)를 확정한다. 표기 흔들림(악센트/한글/띄어쓰기) 주의, 신규 남발 금지.
+3. **없으면 상위 아펠라시옹으로** — 정확한 1er/Grand Cru 항목이 마스터에 없으면 상위 아펠라시옹(예: Chablis 1er Cru → `Chablis`)으로라도 연결. region만 남기고 appellation을 비우지 말 것.
+4. **확신이 없으면 비워라** — 후보가 없거나 모호하거나 라벨과 일치하지 않으면 **`appellation_id`를 아예 넣지 않는다(생략).** 추측은 금지다. **매핑이 없는 것이 틀린 매핑보다 낫다** — 틀린 아펠라시옹은 정복 도감을 오염시키고 운영자가 사후에 정리해야 한다.
 
-> 아펠라시옹 미연결로 등록된 와인은 정복 도감에서 집계되지 않아 도감이 비어 보인다.
+> 아펠라시옹 미연결로 등록된 와인은 정복 도감에서 집계되지 않아 도감이 비어 보인다. 그렇다고 **틀린 아펠라시옹을 추측으로 채우지 말 것** — 미연결(생략)은 나중에 채우면 되지만, 틀린 연결은 잘못된 정복으로 집계되어 더 나쁘다.
+
+```bash
+# 아펠라시옹 정본 검색 (와인 등록 resolve 단계)
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/appellations/search?q=Gevrey"
+```
+
+**응답:**
+```json
+{
+  "success": true,
+  "items": [
+    {
+      "id": 9,
+      "name": "Gevrey-Chambertin",
+      "name_ko": "즈브레-샹베르탱",
+      "region": "Côte de Nuits",
+      "country": "France",
+      "classification": "Village"
+    }
+  ]
+}
+```
+
+> `q`는 필수이며 빈/공백 문자열이나 허용 길이(100자) 초과 시 400이다. 결과는 상위 10건, prefix 매칭이 먼저 오는 결정적 순서다.
 
 > 백엔드 필수값은 `canonical_name` 하나다. 다만 검색·정복·탐색 품질을 위해 타입과 지리 연결을 가능한 한 채운다. 이름/ID 방식 모두 지원하지만 마스터에 없는 지리는 400이며 이 API가 새 국가·지역·아펠라시옹을 만들지 않는다.
 
@@ -185,12 +210,13 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
 
 ### 매핑 규칙 (등록 전 필수 절차)
 
+0. **(권장 시작점) 아펠라시옹 정본 검색** — 아펠라시옹명을 알면 `GET /api/wineduck/appellations/search?q=<이름>`으로 바로 후보 `id`를 resolve한다(상위 10건, prefix 우선). 후보의 `region`/`country`로 아래 계층 매핑도 함께 확정할 수 있다.
 1. `GET /api/wineduck/countries` 로 국가 목록을 받아 **이름 정확 매칭**으로 country_id 확정
 2. `GET /api/wineduck/countries/{country_id}/regions` 로 지역 목록을 받아 매칭
    - 부르고뉴처럼 sub-region이 있으면 `?include_sub=true` 옵션 사용 가능
    - 이름이 미묘하게 다른 케이스(예: "Côte Chalonnaise" vs "Cote Chalonnaise" vs "코트 샬로네즈") **우선 한글명/영문명 둘 다 비교**해서 동일 지역 ID 사용
 3. `GET /api/wineduck/regions/{region_id}/appellations` 로 아펠라시옹 매칭
-4. **기존 ID가 없을 때만** 신규 추가 — 그것도 단순 추측 금지. 사용자에게 "이 아펠라시옹이 새로 등록되어야 하는데, 정말 신규가 맞아?" 확인 후 진행
+4. **기존 ID가 없을 때만** 신규 추가 — 그것도 단순 추측 금지. 사용자에게 "이 아펠라시옹이 새로 등록되어야 하는데, 정말 신규가 맞아?" 확인 후 진행. **모호하면 `appellation_id`를 비워둔다(추측 금지, 미연결이 오연결보다 낫다).**
 
 ### ❌ 절대 하지 말 것
 - "비슷해 보이지만 다른 이름이라 새로 만든다" — 중복 region/appellation의 주범
@@ -210,6 +236,9 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries/1
 
 ### 아펠라시옹 조회
 ```bash
+# 이름으로 정본 검색 (등록 resolve 단계 — 권장 시작점)
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/appellations/search?q=Gevrey"
+
 # 코트 드 뉘의 아펠라시옹
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/5/appellations"
 
@@ -236,7 +265,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/a
 1. `wines/search?name=Gevrey-Chambertin&vintage=2023` 로 중복 확인 — 카탈로그는 **빈티지별 별도 row**다(같은 이름 2021/2022는 다른 와인). quick-tasting에 `wine_id`를 지정하면 name/type/vintage는 카탈로그가 정본이며 불일치 시 `409 WINE_ID_FIELD_MISMATCH`가 반환된다 (상세는 wineduck-tasting 스킬)
 2. Type A 판단 → canonical_name: "Gevrey-Chambertin Vieilles Vignes"
 3. producer: "Domaine Geantet-Pansiot"
-4. country_id=1(FR), region_id=5(Côte de Nuits), appellation_id=9(Gevrey-Chambertin)
+4. **아펠라시옹 resolve** — `appellations/search?q=Gevrey-Chambertin`로 후보 조회 → `name`/`region`/`country`가 라벨과 일치하는 `id=9` 확정 → country_id=1(FR), region_id=5(Côte de Nuits), appellation_id=9. **일치하는 후보가 없으면 appellation_id 생략**
 5. 사용자에게 확인 → 등록
 
 ## 주의사항

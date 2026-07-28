@@ -80,9 +80,13 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/countries/1
 
 ### 5. 아펠라시옹 발견 워크플로
 
-아펠라시옹 발견은 별도 스킬이 아니라 이 검색 스킬 안에서 수행한다. 국가 → 지역 → 아펠라시옹 순으로 기존 마스터를 좁히고, 해당 산지의 와인은 `/wines/by-region`으로 조회한다. 특정 지역의 아펠라시옹(원산지 명칭) 목록:
+아펠라시옹 발견은 별도 스킬이 아니라 이 검색 스킬 안에서 수행한다. 이름을 알면 `/appellations/search?q=`로 바로 좁히고, 지역 계층을 훑을 때는 국가 → 지역 → 아펠라시옹 순으로 기존 마스터를 좁힌다. 해당 산지의 와인은 `/wines/by-region`으로 조회한다.
 
 ```bash
+# 이름으로 아펠라시옹 정본 검색 (상위 10건, prefix 우선, 인증 불필요)
+# 와인 등록 시에는 이 검색이 appellation_id 정본 resolve 단계다 (wineduck-wine 스킬 참조)
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/appellations/search?q=Gevrey"
+
 # 코트 드 뉘(region_id=5)의 아펠라시옹
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/5/appellations"
 
