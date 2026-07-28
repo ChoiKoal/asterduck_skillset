@@ -144,7 +144,7 @@ curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/wineduck/wine
 
 파라미터 계약: 셋 중 일부만 보내도 됨 — 아펠라시옹을 주면 지역/국가가 자동 보강되고, 지역을 주면 국가가 자동 보강된다. 유효하지 않은 ID면 400.
 
-ID 매핑 방법(마스터 조회 → ID 확인 → 없으면 상위 아펠라시옹으로)은 **wineduck-wine 스킬**의 "지역/아펠라시옹 ID 매핑" 절차를 따른다.
+ID 매핑 방법(아펠라시옹 정본 검색 → ID 확인 → 없으면 상위 아펠라시옹으로)은 **wineduck-wine 스킬**의 "지역/아펠라시옹 ID 매핑" 절차를 따른다. 이름을 알면 `GET /wineduck/appellations/search?q=<이름>`으로 `appellation_id`를 먼저 resolve한 뒤 파라미터로 넘긴다. **일치하는 후보가 없거나 모호하면 추측하지 말고 비워둔다** — 미연결이 오연결보다 낫다.
 
 ##### 와인 매칭·빈티지 규칙
 
