@@ -113,7 +113,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines?searc
 # 국가·지역·아펠라시옹 직접 탐색은 전용 경로 사용
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?country_id=1&page=1&per_page=20"
 curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?region_id=4&page=1&per_page=20"
-curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?appellation_id=100&page=1&per_page=20"
+curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/wines/by-region?appellation_id=9&page=1&per_page=20"
 ```
 
 `/wines/by-region`은 `appellation_id` → `region_id` → `country_id` 우선순위로 하나의 지리 범위를 적용한다. `region_id`는 해당 지역과 바로 아래 하위 지역까지 포함한다. 이 경로는 `page`/`per_page`만 지원하며 `wine_type`·텍스트 결합 필터는 지원하지 않는다. 결과 전체에 대한 결합 검색이 필요하면 백엔드 지원이 추가될 때까지 별도 요청으로 처리한다.

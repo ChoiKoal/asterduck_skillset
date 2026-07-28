@@ -93,12 +93,12 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/appellation
   "success": true,
   "items": [
     {
-      "id": 100,
+      "id": 9,
       "name": "Gevrey-Chambertin",
       "name_ko": "주브레샹베르탱",
       "region": "코트 드 뉘",
       "country": "프랑스",
-      "classification": "village"
+      "classification": "aoc"
     }
   ]
 }
@@ -260,7 +260,7 @@ curl -s "https://coffeeduckbe-production.up.railway.app/api/wineduck/regions/4/a
 1. `wines/search?name=Gevrey-Chambertin&vintage=2023` 로 중복 확인 — 카탈로그는 **빈티지별 별도 row**다(같은 이름 2021/2022는 다른 와인). quick-tasting에 `wine_id`를 지정하면 name/type/vintage는 카탈로그가 정본이며 불일치 시 `409 WINE_ID_FIELD_MISMATCH`가 반환된다 (상세는 wineduck-tasting 스킬)
 2. Type A 판단 → canonical_name: "Gevrey-Chambertin Vieilles Vignes"
 3. producer: "Domaine Geantet-Pansiot"
-4. **아펠라시옹 resolve** — `appellations/search?q=Gevrey-Chambertin`로 후보 조회 → `name`/`region`/`country`가 라벨과 일치하는 `id=100` 확정 → appellation_id=100 (country/region은 이름 방식으로 함께 전달 가능). **일치하는 후보가 없으면 appellation_id 생략**
+4. **아펠라시옹 resolve** — `appellations/search?q=Gevrey-Chambertin`로 후보 조회 → `name`/`region`/`country`가 라벨과 일치하는 `id=9` 확정 → appellation_id=9 (country/region은 이름 방식으로 함께 전달 가능). **일치하는 후보가 없으면 appellation_id 생략**
 5. 사용자에게 확인 → 등록
 
 ## 주의사항
