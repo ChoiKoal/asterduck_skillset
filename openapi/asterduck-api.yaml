@@ -1530,8 +1530,8 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
-      description: JWT 토큰 (24시간 유효). /api/auth/login으로 발급.
+      bearerFormat: opaque
+      description: AI 스킬 토큰 (adk_..., 1년 유효, 즉시 폐기 가능). aster.duck 웹 > AI Skillset 페이지에서 발급. 비밀번호 변경·토큰 관리·계정 삭제·관리자 API에는 사용 불가(403).
 
   schemas:
     UserInfo:

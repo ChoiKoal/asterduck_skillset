@@ -45,7 +45,7 @@ echo "✅ Aster.duck skills installed to .agents/skills/"
 ```
 Open: https://raw.githubusercontent.com/ChoiKoal/asterduck_skillset/main/openapi/asterduck-api.yaml
 Paste into: Actions / Custom Tools
-Auth: Bearer Token (get via /api/auth/login)
+Auth: Bearer Token — aster.duck 웹 > AI Skillset에서 발급한 스킬 토큰(adk_..., 1년)
 ```
 
 ### After installation — verify
@@ -196,7 +196,7 @@ asterduck_skillset/
 ## 🔌 API Reference
 
 - **Base URL**: `https://coffeeduckbe-production.up.railway.app/api`
-- **인증**: JWT Bearer Token (24시간 유효)
+- **인증**: AI 스킬 토큰 (`adk_...`, 1년 유효, 웹에서 발급·폐기)
 - **응답 형식**: JSON
 - **다국어**: `Accept-Language` 헤더 지원 (ko, ja, en)
 - **OpenAPI inventory**: 56 operations / 45 paths
@@ -205,11 +205,9 @@ asterduck_skillset/
 ### 인증 플로우 (Minimal)
 
 ```bash
-# 1. 로그인 → 토큰 획득
-TOKEN=$(curl -s -X POST https://coffeeduckbe-production.up.railway.app/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"YOUR_ID","password":"YOUR_PW"}' \
-  | jq -r '.token')
+# 1. 토큰 준비 — aster.duck 웹 로그인 → AI Skillset 페이지에서 발급 (adk_..., 1년 유효)
+#    AI는 아이디/비밀번호를 다루지 않는다. 발급된 토큰만 환경변수로 전달받는다.
+TOKEN="$ASTERDUCK_TOKEN"
 
 # 2. 이후 API 호출
 curl -H "Authorization: Bearer $TOKEN" \
@@ -229,9 +227,10 @@ curl --resolve coffeeduckbe-production.up.railway.app:443:66.33.22.36 \
   https://coffeeduckbe-production.up.railway.app/api/health
 ```
 
-### 토큰 만료 (24h)
+### 토큰 만료·폐기 (401)
 
-로그인 시 받은 토큰은 24시간 후 만료됩니다. 만료 시 `/auth/login` 재호출.
+스킬 토큰은 발급 후 1년 유효하며 웹에서 언제든 폐기할 수 있습니다. 401이 나오면
+aster.duck 웹 > AI Skillset(또는 WineDuck 설정 > AI 스킬셋)에서 새 토큰을 발급하세요.
 
 ### 회원가입 없이 테스트
 
